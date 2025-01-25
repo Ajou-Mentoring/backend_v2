@@ -102,10 +102,9 @@ jobs:
     - name: 테스트 서버 배포
       if: github.ref == 'refs/heads/test'
       run: |
-        echo /home/ubuntu/${{ secrets.SVC_DIR }}/TEST/.env
         ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }} <<EOF
           docker rmi class-connect-v2-backend-test || true
           docker pull ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest
           docker stop test || true && docker rm test || true
-          nohup docker run -d --name test -p 8090:8080 -e TZ=Asia/Seoul --env-file /home/ubuntu/${{ secrets.SVC_DIR }}/TEST/.env --env SPRING_PROFILES_ACTIVE=develop ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest > test.log 2>&1 &
+          nohup docker run -d --name test -p 8090:8080 -e TZ=Asia/Seoul --env-file /home/ubuntu/ClassConnectV2/TEST/.env --env SPRING_PROFILES_ACTIVE=develop ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest > test.log 2>&1 &
         EOF
