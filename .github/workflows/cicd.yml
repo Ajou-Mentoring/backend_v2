@@ -39,7 +39,7 @@ jobs:
         chmod 600 ${HOME}/.ssh/id_rsa
 
     - name: EC2 민감정보 GET
-      run: scp -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa -r ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }}:/home/ubuntu/${{ SVC_DIR }}/secrets/* ./src/main/resources/
+      run: scp -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa -r ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }}:/home/ubuntu/${{ secrets.SVC_DIR }}/secrets/* ./src/main/resources/
 
     - name: JDK 21 설치
       uses: actions/setup-java@v4
