@@ -102,6 +102,7 @@ jobs:
     - name: 테스트 서버 배포
       if: github.ref == 'refs/heads/test'
       run: |
+        echo /home/ubuntu/${{ secrets.SVC_DIR }}/TEST/.env
         ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }} <<EOF
           docker rmi class-connect-v2-backend-test || true
           docker pull ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest
