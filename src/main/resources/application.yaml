@@ -1,0 +1,88 @@
+spring:
+  # application properties
+  profiles:
+    active: local # default
+    group:
+      local:
+        #- saml
+        #- slack
+        #- aws
+      dev:
+        #- saml
+        #- slack
+        #- aws
+      deploy:
+        #- saml
+        #- slack
+        #- aws
+
+  # .env
+  config:
+    import: optional:file:.env[.properties]
+
+  # JPA
+  jpa:
+    database-platform: org.hibernate.dialect.MariaDBDialect
+    #database: test
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+
+  # MVC
+  web:
+    resources:
+      static-locations: classpath:/WEB-INF/
+      add-mappings: true
+
+  # Multipart file
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+
+
+  # Redis
+  #redis:
+  #  host: ${REDIS_HOST}
+  #  port: ${REDIS_PORT}
+
+  #mail:
+  #  host: ${GMAIL_HOST}
+  #  port: ${GMAIL_PORT}
+#    username: ${GMAIL_USER}
+#    password: ${GMAIL_PASSWORD}
+#    templates:
+#      path: mail-templates/html
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          timeout: 5000
+#          starttls:
+#            enable: true
+
+#  thymeleaf:
+#    check-template-location: true
+#    prefix: classpath:/mail-templates
+#    suffix: .html
+#    cache: false
+
+my-app:
+  base-url: ${FRONT_DOMAIN}
+
+server:
+  servlet:
+    context-path: ${BACK_CONTEXT_PATH}
+
+# JWT
+jwt:
+  header: ${JWT_HEADER}
+  prefix: ${JWT_PREFIX}
+  secret: ${JWT_SECRET}
+  expired-at: ${JWT_DURATION}

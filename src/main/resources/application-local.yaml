@@ -1,0 +1,25 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+    url: jdbc:mariadb://${LOCAL_DB_HOST}:${LOCAL_DB_PORT}/${LOCAL_DB_NAME}
+    username: ${LOCAL_DB_USER}
+    password: ${LOCAL_DB_PASSWORD}
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  security:
+    client:
+      landing-page-url: ${LANDING_PAGE_URL}
+      sign-up-page-url: ${SIGNUP_PAGE_URL}
+
+#server:
+#  domain: https://localhost
+#  port: ${LOCAL_SERVER_PORT:8443}
+#  ssl:
+#    key-store: ${SSL_KEY_STORE}
+#    key-store-type: ${SSL_KEY_TYPE}
+#    key-store-password: ${SSL_KEY_PASSWORD}

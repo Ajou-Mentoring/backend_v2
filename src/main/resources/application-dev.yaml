@@ -1,0 +1,25 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+    url: jdbc:mariadb://${DEV_DB_HOST}:${DEV_DB_PORT}/${DEV_DB_NAME}
+    username: ${DEV_DB_USER}
+    password: ${DEV_DB_PASSWORD}
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  security:
+    client:
+      landing-page-url: ${DEV_LANDING_PAGE_URL}
+      sign-up-page-url: ${DEV_SIGNUP_PAGE_URL}
+
+#server:
+#  domain: ${BACK_DOMAIN}
+#  port: ${DEV_SERVER_PORT:8443}
+#  ssl:
+#    key-store: ${SSL_KEY_STORE}
+#    key-store-type: ${SSL_KEY_TYPE}
+#    key-store-password: ${SSL_KEY_PASSWORD}
