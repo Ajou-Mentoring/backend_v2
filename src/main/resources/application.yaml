@@ -7,11 +7,11 @@ spring:
         #- saml
         #- slack
         #- aws
-      dev:
+      test:
         #- saml
         #- slack
         #- aws
-      deploy:
+      main:
         #- saml
         #- slack
         #- aws
