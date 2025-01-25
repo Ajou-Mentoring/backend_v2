@@ -53,7 +53,9 @@ jobs:
         gradle-version: 8.11.1 # 필요시 버전 수정 가능
 
     - name: Gradle Wrapper로 빌드
-      run: ./gradlew clean build
+      run: |
+        chmod +x ./gradlew
+        ./gradlew clean build
       
     - name: Docker Buildx [SetUp]
       uses: docker/setup-buildx-action@v1
