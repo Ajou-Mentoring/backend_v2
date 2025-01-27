@@ -1,0 +1,110 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "main", "test" ]
+
+jobs:
+  build:
+
+    name: JAR 파일 & Docker 이미지 빌드
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: 최신 버전 태그 가져오기
+      run: | 
+        git fetch --tags
+        # 가장 최신 태그 추출
+        LATEST_TAG=$(git describe --tags --abbrev=0 || echo "0.0.0")
+        echo "Latest tag: $LATEST_TAG"
+        # semver 증가 논리
+        VERSION=$(echo $LATEST_TAG | awk -F. -v OFS=. '{$NF += 1 ; print}')
+        echo "Next version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: SSH 키 생성
+      run: |
+        mkdir -p ${HOME}/.ssh
+        echo "${{ secrets.EC2_PEM }}" > ${HOME}/.ssh/id_rsa
+        chmod 600 ${HOME}/.ssh/id_rsa
+
+    - name: EC2 민감정보 GET
+      run: scp -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa -r ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }}:/home/ubuntu/${{ secrets.SVC_DIR }}/secrets/* ./src/main/resources/
+
+    - name: JDK 21 설치
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'corretto'
+
+    - name: Gradle 설치
+      uses: gradle/gradle-build-action@v2
+      with:
+        gradle-version: 8.11.1 # 필요시 버전 수정 가능
+
+    - name: Gradle Wrapper로 빌드
+      run: |
+        chmod +x ./gradlew
+        ./gradlew test -i
+        ./gradlew clean build
+      
+    - name: Docker Buildx [SetUp]
+      uses: docker/setup-buildx-action@v1
+
+    - name: DockerHub 로그인
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: 도커 이미지 빌드/푸쉬 (운영)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-main:latest .
+        docker push ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-main:latest
+
+    - name: 도커 이미지 빌드/푸쉬 (테스트)
+      if: github.ref == 'refs/heads/test'
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest .
+        docker push ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest
+
+  deploy:
+    name: EC2 배포
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+
+    - name: SSH 키 생성
+      run: |
+        mkdir -p ${HOME}/.ssh
+        echo "${{ secrets.EC2_PEM }}" > ${HOME}/.ssh/id_rsa
+        chmod 600 ${HOME}/.ssh/id_rsa
+
+    - name: 운영 서버 배포
+      if: github.ref == 'refs/heads/main'
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }} <<EOF
+          docker rmi class-connect-v2-backend-main || true
+          docker pull ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-main:latest
+          docker stop main || true && docker rm main || true
+          nohup docker run -d --name main -p 8080:8080 -e TZ=Asia/Seoul --env-file ~/${{ secrets.SVC_DIR }}/MAIN/.env --env SPRING_PROFILES_ACTIVE=main ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-main:latest > main.log 2>&1 &
+        EOF
+
+    - name: 테스트 서버 배포
+      if: github.ref == 'refs/heads/test'
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }} <<EOF
+          docker rmi class-connect-v2-backend-test || true
+          docker pull ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest
+          docker stop test || true && docker rm test || true
+          nohup docker run -d --name test -p 8090:8080 -e TZ=Asia/Seoul --env-file ~/${{ secrets.SVC_DIR }}/TEST/.env --env SPRING_PROFILES_ACTIVE=test ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest > test.log 2>&1 &
+        EOF
