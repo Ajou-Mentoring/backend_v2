@@ -7,7 +7,7 @@ spring:
         #- saml
         #- slack
         #- aws
-      dev:
+      develop:
         #- saml
         #- slack
         #- aws

@@ -1,20 +1,20 @@
 spring:
   config:
     activate:
-      on-profile: dev
+      on-profile: test
 
   datasource:
     hikari:
       maximum-pool-size: 4
-    url: jdbc:mariadb://${DEV_DB_HOST}:${DEV_DB_PORT}/${DEV_DB_NAME}
-    username: ${DEV_DB_USER}
-    password: ${DEV_DB_PASSWORD}
+    url: jdbc:mariadb://${TEST_DB_HOST}:${TEST_DB_PORT}/${TEST_DB_NAME}
+    username: ${TEST_DB_USER}
+    password: ${TEST_DB_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver
 
   security:
     client:
-      landing-page-url: ${DEV_LANDING_PAGE_URL}
-      sign-up-page-url: ${DEV_SIGNUP_PAGE_URL}
+      landing-page-url: ${TEST_LANDING_PAGE_URL}
+      sign-up-page-url: ${TEST_SIGNUP_PAGE_URL}
 
 #server:
 #  domain: ${BACK_DOMAIN}

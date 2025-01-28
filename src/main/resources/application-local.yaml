@@ -6,7 +6,8 @@ spring:
   datasource:
     hikari:
       maximum-pool-size: 4
-    url: jdbc:mariadb://${LOCAL_DB_HOST}:${LOCAL_DB_PORT}/${LOCAL_DB_NAME}
+    #url: jdbc:mariadb://${LOCAL_DB_HOST}:${LOCAL_DB_PORT}/${LOCAL_DB_NAME}
+    url: jdbc:mariadb://${LOCAL_DB_HOST}:3306/${LOCAL_DB_NAME}
     username: ${LOCAL_DB_USER}
     password: ${LOCAL_DB_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver

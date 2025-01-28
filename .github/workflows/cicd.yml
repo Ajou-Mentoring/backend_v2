@@ -55,6 +55,7 @@ jobs:
     - name: Gradle Wrapper로 빌드
       run: |
         chmod +x ./gradlew
+        ./gradlew test -i
         ./gradlew clean build
       
     - name: Docker Buildx [SetUp]
@@ -91,19 +92,21 @@ jobs:
     - name: 운영 서버 배포
       if: github.ref == 'refs/heads/main'
       run: |
-        ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa {{ secrets.EC2_USERNAME }}@{{ secrets.EC2_ADDRESS }} <<EOF
+        ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }} <<EOF
+          docker rmi class-connect-v2-backend-main || true
           docker pull ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-main:latest
           docker stop main || true && docker rm main || true
-          nohup docker run -d --name main -p 8080:8080 -e TZ=Asia/Seoul --env-file ~/{{ secrets.SVC_DIR }}/.env --env SPRING_PROFILES_ACTIVE=main ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-main:latest > main.log 2>&1 &
+          nohup docker run -d --name main -p 8080:8080 -e TZ=Asia/Seoul --env-file ~/${{ secrets.SVC_DIR }}/MAIN/.env --env SPRING_PROFILES_ACTIVE=main ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-main:latest > main.log 2>&1 &
           docker network connect my_network main
         EOF
 
     - name: 테스트 서버 배포
       if: github.ref == 'refs/heads/test'
       run: |
-        ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa {{ secrets.EC2_USERNAME }}@{{ secrets.EC2_ADDRESS }} <<EOF
+        ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_ADDRESS }} <<EOF
+          docker rmi class-connect-v2-backend-test || true
           docker pull ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest
           docker stop test || true && docker rm test || true
-          nohup docker run -d --name test -p 8090:8080 -e TZ=Asia/Seoul --env-file /home/ubuntu/{{ secrets.SVC_DIR }}/.env --env SPRING_PROFILES_ACTIVE=test ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest > test.log 2>&1 &
+          nohup docker run -d --name test -p 8090:8080 -e TZ=Asia/Seoul --env-file ~/${{ secrets.SVC_DIR }}/TEST/.env --env SPRING_PROFILES_ACTIVE=test ${{ secrets.DOCKER_USERNAME }}/class-connect-v2-backend-test:latest > test.log 2>&1 &
           docker network connect my_network test
         EOF

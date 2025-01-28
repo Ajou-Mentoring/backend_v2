@@ -1,14 +1,14 @@
 spring:
   config:
     activate:
-      on-profile: deploy
+      on-profile: main
 
   datasource:
     hikari:
       maximum-pool-size: 4
-    url: jdbc:mariadb://${DEPLOY_DB_HOST}:${DEPLOY_DB_PORT}/${DEPLOY_DB_NAME}
-    username: ${DEPLOY_DB_USER}
-    password: ${DEPLOY_DB_PASSWORD}
+    url: jdbc:mariadb://${MAIN_DB_HOST}:${MAIN_DB_PORT}/${MAIN_DB_NAME}
+    username: ${MAIN_DB_USER}
+    password: ${MAIN_DB_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver
 
   security:
