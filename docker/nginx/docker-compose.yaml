@@ -20,50 +20,50 @@ services:
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
 
-  certbot:
-    container_name: certbot
-    image: certbot/certbot
-    restart: unless-stopped
-    volumes:
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    networks:
-      - my_network1
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
-  main-green:
-    container_name: main-green
-    image: $1
-    ports:
-      - "8080:8080"
-    networks:
-      - my_network1
-
-
-  main-blue:
-    container_name: main-blue
-    image: $1
-    ports:
-      - "8081:8080"
-    networks:
-      - my_network1
-
-  test-green:
-    container_name: test-green
-    image: $1
-    ports:
-      - "8090:8090"
-    networks:
-      - my_network1
-
-
-  test-blue:
-    container_name: test-blue
-    image: $1
-    ports:
-      - "8091:8090"
-    networks:
-      - my_network1
+#  certbot:
+#    container_name: certbot
+#    image: certbot/certbot
+#    restart: unless-stopped
+#    volumes:
+#      - ./data/certbot/conf:/etc/letsencrypt
+#      - ./data/certbot/www:/var/www/certbot
+#    networks:
+#      - my_network1
+#    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+#
+#  main-green:
+#    container_name: main-green
+#    image: $1
+#    ports:
+#      - "8080:8080"
+#    networks:
+#      - my_network1
+#
+#
+#  main-blue:
+#    container_name: main-blue
+#    image: $1
+#    ports:
+#      - "8081:8080"
+#    networks:
+#      - my_network1
+#
+#  test-green:
+#    container_name: test-green
+#    image: $1
+#    ports:
+#      - "8090:8090"
+#    networks:
+#      - my_network1
+#
+#
+#  test-blue:
+#    container_name: test-blue
+#    image: $1
+#    ports:
+#      - "8091:8090"
+#    networks:
+#      - my_network1
 
 
 networks:
