@@ -32,9 +32,9 @@ public class TestController {
         Map<String, String> res = new HashMap<>();
         res.put("name", "공명규");
         res.put("age", "28");
-        res.put("message", "API 테스트");
+        res.put("department", "소프트웨어학과");
 
-        return Response.ok(HttpStatus.CREATED, res);
+        return Response.ok(HttpStatus.CREATED, "사용자 조회 성공", res);
     }
 
     @GetMapping("/error")
