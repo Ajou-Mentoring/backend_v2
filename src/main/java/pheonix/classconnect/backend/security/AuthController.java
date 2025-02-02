@@ -74,7 +74,7 @@ public class AuthController {
         redirect.addAttribute("token", token);
         redirect.addAttribute("signup", userInfo == null);
 
-        return "redirect:" + "https://api.class-connect.kr:8443/api/v2/auth/redirect"; //https://" + serverDomain + ":" + serverPort + "/v2/auth/redirect";
+        return "redirect:" + "https://" + serverDomain + ":" + serverPort + "api/v2/auth/redirect";
     }
 
     @GetMapping("/redirect")
