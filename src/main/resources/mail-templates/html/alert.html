@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Alert</title>
+    <script type="text/javascript">
+        window.onload = function() {
+            alert("[[${message}]]");
+            window.location.href = "[[${redirectUrl}]]";
+        };
+    </script>
+</head>
+<body>
+</body>
+</html>

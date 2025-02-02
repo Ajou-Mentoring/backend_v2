@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--    <link rel="stylesheet" type="text/css" href="../css/style.css">-->
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .background {
+            background-color: #efeeee;
+            padding: 20px 100px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: auto;
+            max-width: 780px;
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 150px 50px;
+        }
+        p {
+            line-height: 1.6;
+            font-size: 16px;
+            color: #333333;
+            margin: 10px 0;
+        }
+        a {
+            color: #1a0dab;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        strong, u {
+            color: #000066;
+        }
+        u {
+            text-decoration: none;
+            border-bottom: 1px dashed #000066;
+        }
+    </style>
+</head>
+<body>
+
+<div class="background">
+    <div class="content">
+        <p>
+            <strong th:text="${name}">익명</strong>
+            <strong th:text="${courseRole}">멘토님</strong>이
+            <strong><u th:text="${className}">클래스 이름</u></strong>
+            클래스의 멘토링을 <strong th:text="${mentoringAction}">완료</strong>했습니다.
+        </p>
+        <p>
+            <a th:href="@{${url}}">여기를 클릭</a>하여 자세한 내용을 확인하세요!
+        </p>
+        <br/>
+        <p>감사합니다.</p>
+        <p>ClassConnect 팀</p>
+    </div>
+</div>
+
+</body>
+</html>
