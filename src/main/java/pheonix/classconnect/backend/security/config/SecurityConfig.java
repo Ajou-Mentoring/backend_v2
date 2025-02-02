@@ -74,9 +74,9 @@ public class SecurityConfig {
                 // 인증, 인가
                 .authorizeHttpRequests(request ->  // HttpServletRequest 를 사용하는 모든 요청에 대한 접근 제한 설정
                         request
-                                .requestMatchers("/api/v1/*/login/*", "/api/v1/test/*").permitAll()
-                                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                                .requestMatchers("/api/v1/**").authenticated()// Todo: Role에 따른 접근 권한 설정
+                                .requestMatchers("/api/v2/*/login/*", "/api/v2/test/*").permitAll()
+                                .requestMatchers("/api/v2/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/api/v2/**").authenticated()// Todo: Role에 따른 접근 권한 설정
                                 .anyRequest().permitAll()
                 )
 
