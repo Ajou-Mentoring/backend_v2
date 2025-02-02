@@ -11,7 +11,7 @@ import pheonix.classconnect.backend.com.user.repository.UserRepository;
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
     /*
         PK 또는 Unique 키로 유저를 조회한다.
         만약 조회된 유저가 없다면 null 을 반환한다.
