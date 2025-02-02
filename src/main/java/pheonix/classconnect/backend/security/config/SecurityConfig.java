@@ -95,9 +95,9 @@ public class SecurityConfig {
                 // filter 설정
 
                 // HTTPS 적용 설정
-                .requiresChannel(channel ->
-                        channel
-                                .anyRequest().requiresSecure())
+//                .requiresChannel(channel ->
+//                        channel
+//                                .anyRequest().requiresSecure())
         ;
 
         return http.build();
