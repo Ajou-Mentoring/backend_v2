@@ -27,18 +27,31 @@ dependencies {
 	/* Dev 설정 */
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'jakarta.validation:jakarta.validation-api:3.0.0'
+	implementation 'org.hibernate.validator:hibernate-validator:7.0.1.Final'
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
 
 	// JPA
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	// MariaDB
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
+	// aws
+	implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.3.1'
+
+	/* Security 설정 */
 	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-
-	// Lombok
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.1'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.1'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.1'
+	// SAML 2.0
+	implementation 'org.opensaml:opensaml:2.6.4'
+	implementation 'org.springframework.security.extensions:spring-security-saml2-core:1.0.10.RELEASE'
 
 
 	/* Test 설정 */

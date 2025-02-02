@@ -2,7 +2,7 @@ package pheonix.classconnect.backend.exceptions;
 
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import pheonix.classconnect.backend.com.common.dto.Response;
+import pheonix.classconnect.backend.com.common.model.Response;
 
 @RestControllerAdvice
 public class GlobalControllerAdvice {

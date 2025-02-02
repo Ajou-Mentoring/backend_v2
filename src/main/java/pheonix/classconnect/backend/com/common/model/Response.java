@@ -1,4 +1,4 @@
-package pheonix.classconnect.backend.com.common.dto;
+package pheonix.classconnect.backend.com.common.model;
 
 
 import lombok.AllArgsConstructor;

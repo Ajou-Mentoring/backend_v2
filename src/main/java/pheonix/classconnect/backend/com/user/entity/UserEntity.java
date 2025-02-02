@@ -9,6 +9,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import pheonix.classconnect.backend.com.auth.entity.AuthorityEntity;
 import pheonix.classconnect.backend.com.common.entity.BaseTimeEntity;
+import pheonix.classconnect.backend.com.department.entity.DepartmentEntity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,15 +39,11 @@ public class UserEntity extends BaseTimeEntity {
     @Column(name = "active_state", length = 1)
     private Short activeState;
 
-    @Column(name = "join_at")
-    private LocalDateTime joinAt;
+    @ManyToOne(targetEntity = DepartmentEntity.class, fetch = FetchType.LAZY)
+    @JoinColumn(name="dep_id", referencedColumnName = "id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private DepartmentEntity department;
 
-    // TODO: 전공 아이디 참조
-    //    @ManyToOne(targetEntity = DepartmentEntity.class, cascade = {}, fetch = FetchType.LAZY, optional = false)
-    //    @JoinColumn(name="dep_id", referencedColumnName = "id")
-    //    @OnDelete(action = OnDeleteAction.SET_NULL)
-    //    private DepartmentEntity department;
-    // TODO: 권한 칼럼 추가
     @ManyToMany
     @JoinTable(
             name = "UserAuth",
@@ -57,5 +54,5 @@ public class UserEntity extends BaseTimeEntity {
                     @JoinColumn(name = "auth_code", referencedColumnName = "code")
             }
     )
-    Set<AuthorityEntity> authorities = new HashSet<>();
+    Set<AuthorityEntity> authorities;
 }

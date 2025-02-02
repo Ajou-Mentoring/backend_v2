@@ -4,17 +4,17 @@ spring:
     active: local # default
     group:
       local:
-        #- saml
+        - saml
         #- slack
-        #- aws
-      develop:
-        #- saml
+        - aws
+      main:
+        - saml
         #- slack
-        #- aws
-      deploy:
-        #- saml
+        - aws
+      test:
+        - saml
         #- slack
-        #- aws
+        - aws
 
   # .env
   config:

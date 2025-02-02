@@ -1,4 +1,4 @@
-package pheonix.classconnect.backend.security;
+package pheonix.classconnect.backend.security.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-//import phoenix.ajoumentor.security.jwt.*;
-//import phoenix.ajoumentor.security.service.PrincipalDetailsService;
+import pheonix.classconnect.backend.security.jwt.*;
+import pheonix.classconnect.backend.security.service.PrincipalDetailsService;
 
 import java.util.Arrays;
 
@@ -28,9 +28,9 @@ import java.util.Arrays;
 @EnableMethodSecurity
 @Slf4j
 public class SecurityConfig {
-//    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-//    private final PrincipalDetailsService principalDetailsService;
-//    private final JwtTokenProvider tokenProvider;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PrincipalDetailsService principalDetailsService;
+    private final JwtTokenProvider tokenProvider;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -80,14 +80,14 @@ public class SecurityConfig {
                                 .anyRequest().permitAll()
                 )
 
-//                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)  // JWT 필터 추가
-                //.addFilterBefore(new TokenExceptionFilter(), JwtAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)  // JWT 필터 추가
+                .addFilterBefore(new TokenExceptionFilter(), JwtAuthenticationFilter.class)
 
-//                .userDetailsService(principalDetailsService)
-//                .exceptionHandling(exception ->
-//                        exception
-//                                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-//                                .accessDeniedHandler(new JwtAccessDeniedHandler()))
+                .userDetailsService(principalDetailsService)
+                .exceptionHandling(exception ->
+                        exception
+                                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                                .accessDeniedHandler(new JwtAccessDeniedHandler()))
 
 
 
@@ -95,9 +95,9 @@ public class SecurityConfig {
                 // filter 설정
 
                 // HTTPS 적용 설정
-//                .requiresChannel(channel ->
-//                        channel
-//                                .anyRequest().requiresSecure())
+                .requiresChannel(channel ->
+                        channel
+                                .anyRequest().requiresSecure())
         ;
 
         return http.build();

@@ -1,0 +1,9 @@
+aim:
+  saml:
+    # IDP 메타데이터 파일 위치
+    idp-metadata-path: ${SAML_IDP_METADATA_PATH}
+    # SP 로그인 이동 URL
+    acs-url: /api/v2/saml/acs
+    sp-entity-id: ${SAML_SP_ENTITY_ID}
+    return-url: /api/v2/saml/login-success
+    shared-secret: ${ SAML_SHARED_SECRET }
