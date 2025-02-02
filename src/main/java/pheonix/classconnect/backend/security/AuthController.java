@@ -44,9 +44,9 @@ public class AuthController {
     private String homePageUrl;
     @Value("${spring.security.client.sign-up-page-url}")
     private String signupPageUrl;
-    @Value("${server.domain")
+    @Value("${server.domain}")
     private String serverDomain;
-    @Value("${server.port-export")
+    @Value("${server.port-export}")
     private String serverPort;
 
 
