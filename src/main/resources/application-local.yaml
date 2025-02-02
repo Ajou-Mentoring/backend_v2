@@ -18,7 +18,8 @@ spring:
 
 server:
   domain: https://localhost
-  port: ${LOCAL_SERVER_PORT:8443}
+  port: 8080
+  port-export: ${LOCAL_SERVER_PORT:8443}
 #  ssl:
 #    key-store: ${SSL_KEY_STORE}
 #    key-store-type: ${SSL_KEY_TYPE}

@@ -46,7 +46,7 @@ public class AuthController {
     private String signupPageUrl;
     @Value("${server.domain")
     private String serverDomain;
-    @Value("${server.port")
+    @Value("${server.port-export")
     private String serverPort;
 
 

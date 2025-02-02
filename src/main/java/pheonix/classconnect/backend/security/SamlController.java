@@ -37,7 +37,7 @@ public class SamlController {
 
     public SamlController(final AimProperties properties,
                           @Value("${server.domain}") String serverDomain,
-                          @Value("${server.port}") String serverPort
+                          @Value("${server.port-export}") String serverPort
     ) throws IOException, MainApplicationException {
 
         this.properties = properties;
