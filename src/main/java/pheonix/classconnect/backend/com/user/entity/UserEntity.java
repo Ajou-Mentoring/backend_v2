@@ -39,7 +39,7 @@ public class UserEntity extends BaseTimeEntity {
     @Column(name = "active_state", length = 1)
     private Short activeState;
 
-    @ManyToOne(targetEntity = DepartmentEntity.class, fetch = FetchType.LAZY)
+    @ManyToOne(targetEntity = DepartmentEntity.class, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name="dep_id", referencedColumnName = "id")
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private DepartmentEntity department;

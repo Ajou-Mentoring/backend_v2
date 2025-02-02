@@ -7,14 +7,12 @@ import lombok.*;
 
 @Entity
 @Table(name = "Department")
-@Getter @Setter
+@Getter
 @Builder
 @AllArgsConstructor @NoArgsConstructor
 public class DepartmentEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Min(1) @Max(99)
-    @Column(name="id", length=2, columnDefinition = "TINYINT UNSIGNED")
+    @Column(columnDefinition = "TINYINT UNSIGNED")
     private Integer id;
 
     @Column(nullable = false, length=20)
