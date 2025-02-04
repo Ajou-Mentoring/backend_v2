@@ -35,10 +35,10 @@ spring:
 
 
   # MVC
-  web:
-    resources:
-      static-locations: classpath:/WEB-INF/
-      add-mappings: true
+#  web:
+#    resources:
+#      static-locations: classpath:/WEB-INF/
+#      add-mappings: true
 
   # Multipart file
   servlet:
