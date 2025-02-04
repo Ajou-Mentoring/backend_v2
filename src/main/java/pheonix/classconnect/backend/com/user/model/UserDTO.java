@@ -12,22 +12,22 @@ import java.util.stream.Collectors;
 public class UserDTO {
     @Data
     @Builder
-    public static class UserInfo {
+    public static class User {
         private Long id;
         private String studentNo;
         private String email;
         private String name;
-        private Short activeState;
+        private Short activeStatus;
         private DepartmentDTO.DepartmentInfo department;
         private Set<AuthorityDTO.AuthorityInfo> authorities;
 
-        public static UserInfo fromEntity(UserEntity entity) {
-            return UserInfo.builder()
+        public static User fromEntity(UserEntity entity) {
+            return User.builder()
                     .id(entity.getId())
                     .studentNo(entity.getStudentNo())
                     .email(entity.getEmail())
                     .name(entity.getName())
-                    .activeState(entity.getActiveState())
+                    .activeStatus(entity.getActiveState())
                     .department(DepartmentDTO.DepartmentInfo.fromEntity(entity.getDepartment()))
                     .authorities(entity.getAuthorities().stream().map(AuthorityDTO.AuthorityInfo::fromEntity).collect(Collectors.toSet()))
                     .build();
@@ -41,14 +41,17 @@ public class UserDTO {
         private String name;
         private String email;
         private String studentNo;
-        private Integer department;
+        private String department;
     }
 
     @Data
     @Builder
-    public static class FindOne {
-        private Long id;
+    public static class Create {
         private String email;
         private String studentNo;
+        private String name;
+        private String departmentName;
+        private Set<Short> authorities;
+        private Short activeStatus;
     }
 }

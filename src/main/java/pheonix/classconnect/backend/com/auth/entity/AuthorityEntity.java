@@ -12,6 +12,7 @@ import java.util.Set;
 @Entity(name = "Authority")
 @Table(name = "Authority")
 @Getter
+@Builder
 @NoArgsConstructor @AllArgsConstructor
 public class AuthorityEntity {
     @Id

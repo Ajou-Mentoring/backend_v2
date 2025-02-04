@@ -55,4 +55,15 @@ public class UserEntity extends BaseTimeEntity {
             }
     )
     Set<AuthorityEntity> authorities;
+
+    public void updateDepartment(DepartmentEntity department) {
+        this.department = department;
+    }
+
+    public void addAuthority(AuthorityEntity auth) {
+        if (this.authorities == null || this.authorities.isEmpty()) {
+            this.authorities = Set.of(auth);
+        }
+        else this.authorities.add(auth);
+    }
 }
