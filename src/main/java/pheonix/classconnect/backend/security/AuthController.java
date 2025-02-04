@@ -136,7 +136,7 @@ public class AuthController {
         // 토큰 발급 페이지로 포워딩
         model.addAttribute("message", "회원가입 성공!");
         model.addAttribute("redirectUrl", String.format("%s:%s%s", serverDomain, serverPort, "/api/v2/auth/token?userId=" + signupDTO.getStudentCode()));
-        return "redirect:/alert2.html";
+        return "redirect:" + serverDomain + ":" + serverPort + "/api/alert2.html";
     }
 
     private String determineLandingPageUrl(boolean needSignup) {
