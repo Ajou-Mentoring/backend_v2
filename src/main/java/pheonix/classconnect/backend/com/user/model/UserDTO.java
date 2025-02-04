@@ -40,7 +40,7 @@ public class UserDTO {
     public static class Signup {
         private String name;
         private String email;
-        private String studentNo;
+        private String studentCode;
         private String department;
     }
 

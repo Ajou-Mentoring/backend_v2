@@ -4,21 +4,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 import pheonix.classconnect.backend.com.auth.constant.AuthorityCode;
-import pheonix.classconnect.backend.com.auth.model.AuthorityDTO;
-import pheonix.classconnect.backend.com.department.model.DepartmentDTO;
 import pheonix.classconnect.backend.com.user.constant.UserActiveStatus;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.service.UserService;
@@ -120,14 +115,14 @@ public class AuthController {
 
         /*검증*/
         // 요청자와 가입자가 동일한지 검사
-        if (!signupDTO.getStudentNo().equals(user.getUsername()))
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, String.format("생성할 유저 정보와 요청자 정보가 다릅니다. => 가입자[%s] 요청자[%s]", signupDTO.getStudentNo(), user.getUsername()));
+        if (!signupDTO.getStudentCode().equals(user.getUsername()))
+            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, String.format("생성할 유저 정보와 요청자 정보가 다릅니다. => 가입자[%s] 요청자[%s]", signupDTO.getStudentCode(), user.getUsername()));
 
         /*본처리*/
         UserDTO.Create newUser = UserDTO.Create.builder()
                 .name(signupDTO.getName())
                 .email(signupDTO.getEmail())
-                .studentNo(signupDTO.getStudentNo())
+                .studentNo(signupDTO.getStudentCode())
                 .departmentName(signupDTO.getDepartment())
                 .authorities(Set.of(AuthorityCode.STUDENT))
                 .activeStatus(UserActiveStatus.ACTIVE)
@@ -140,7 +135,7 @@ public class AuthController {
 
         // 토큰 발급 페이지로 포워딩
         model.addAttribute("message", "회원가입 성공!");
-        model.addAttribute("redirectUrl", String.format("%s:%s%s", serverDomain, serverPort, "/api/v1/auth/token?userId=" + signupDTO.getStudentNo()));
+        model.addAttribute("redirectUrl", String.format("%s:%s%s", serverDomain, serverPort, "/api/v1/auth/token?userId=" + signupDTO.getStudentCode()));
         return "alert2";
     }
 
