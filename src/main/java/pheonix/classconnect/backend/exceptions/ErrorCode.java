@@ -16,9 +16,10 @@ public enum ErrorCode {
     DUPLICATED_USER(                HttpStatus.CONFLICT,                    "USR001" ,  "중복된 사용자입니다."),
     USER_CREATE_FAILED(              HttpStatus.INTERNAL_SERVER_ERROR,      "USR002" , "유저 생성에 실패했습니다."),
 
-    AUTH_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "ATH001",   "권한을 찾을 수 없습니다.")
+    AUTH_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "ATH001",   "권한을 찾을 수 없습니다."),
 
-    ;
+    UNSUPPORTED_FILE(HttpStatus.BAD_REQUEST, "FILE001", "지원하지 않는 파일 구분입니다."),
+    FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE002","파일을 찾을 수 없습니다." );
 
     private final HttpStatus httpStatus;
     private final String code;
