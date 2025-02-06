@@ -48,4 +48,9 @@ public class PrincipalDetailsService implements UserDetailsService {
         GrantedAuthority guestRole = new SimpleGrantedAuthority("ROLE_GUEST");
         return new User(guestId, passwordEncoder.encode("1234"), Set.of(guestRole));
     }
+
+    public boolean isAdmin(User user) {
+        return user.getAuthorities().stream()
+                .anyMatch(auth -> auth != null && auth.getAuthority().equals("ROLE_ADMIN"));
+    }
 }
