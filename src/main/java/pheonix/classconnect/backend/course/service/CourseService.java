@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
+import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
@@ -72,9 +73,22 @@ public class CourseService {
     public void delete(Long courseId) {
         // 코스가 존재하는지 체크
         if (courseEntityRepository.existsById(courseId)) {
+
             courseEntityRepository.deleteById(courseId);
+
+            // 코스 이미지 삭제
+            List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId);
+            if (!images.isEmpty()) {
+                for (File image : images) {
+                    fileStorage.deleteByFileId(image.getId());
+                }
+            }
+
         }
-        throw new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, "삭제할 코스를 찾을 수 없습니다.");
+        else {
+            throw new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, "삭제할 코스를 찾을 수 없습니다.");
+        }
+
 
     }
 
