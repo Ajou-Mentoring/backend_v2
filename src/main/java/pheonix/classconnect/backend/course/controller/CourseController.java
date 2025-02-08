@@ -89,9 +89,7 @@ public class CourseController {
         // 요청 검증
         // 관리자가 아닐 경우 자신이 참여한 코스들만 조회할 수 있다.
         if (!principalDetailsService.isAdmin(user)) {
-            if (request.getMemberId() == null || request.getMemberId() != Long.parseLong(user.getUsername())) {
-                throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "전체 조회 권한이 없습니다.");
-            }
+            request.setMemberId(Long.parseLong(user.getUsername()));
         }
 
         // 요청 생성
@@ -142,57 +140,6 @@ public class CourseController {
     }
 
     /**
-     * Course 조회 API (교수) -> professor의 ID로 개설된 Course 리스트 조회
-     * @param professorId : 교수 ID
-     * @param courseFetchRequestDTO : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
-     * @return
-     */
-//    @GetMapping("/professors/{professorId}/courses")
-//    public ResponseWithResult<List<CourseResponse>> getCoursesByProfessorId(@PathVariable(value = "professorId") Integer professorId,
-//                                                                            @Valid @ModelAttribute CourseFetchRequestDTO courseFetchRequestDTO,
-//                                                                            @AuthenticationPrincipal org.springframework.security.core.userdetails.User user){
-//
-//        Integer userId = PrincipalUtils.getUserId(user);
-//        if(userId != professorId){
-//            throw new MainApplicationException(ErrorCode.INVALID_PERMISSION, "잘못된 접근입니다.");
-//        }
-//
-//        List<CourseResponse> courses = courseService.getCoursesByProfessorId(professorId,courseFetchRequestDTO.getYear(), courseFetchRequestDTO.getSemester() ).stream()
-//                .peek(Course::addProfessor)
-//                .map(CourseResponse::fromCourse)
-//                .collect(Collectors.toList());
-//
-//        List<CourseResponse> updatedCourses = courses.stream()
-//                .map(courseResponse -> {
-//                    List<Attachment> attachments = fileStorage.getAttachmentList(domainType, courseResponse.getId());
-//                    if (attachments.size() > 0){
-//                        courseResponse.setImage(AttachmentResponse.Info.fromAttachment(attachments.get(0)));
-//                    }
-//                    return courseResponse;
-//                })
-//                .collect(Collectors.toList());
-//
-//        return ResponseWithResult.success("수업 목록을 조회하였습니다.", updatedCourses);
-//    }
-
-    /**
-     * Semester 조회 API (교수) : 교수 아이디로 강의를 개설한 학기 리스트를 조회하는
-     * @param professorId : 교수 아이디
-     * @param principal : 조회 요청을 보낸
-     * @return
-     */
-//    @GetMapping("/professors/{professorId}/semesters")
-//    public ResponseWithResult<List<SemesterDetailsResponse>> getSemestersByProfessorId(@PathVariable(value = "professorId") Integer professorId,
-//                                                                                       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal){
-//        Integer userId = PrincipalUtils.getUserId(principal);
-//        if(userId != professorId){
-//            throw new MainApplicationException(ErrorCode.INVALID_PERMISSION, "잘못된 접근입니다. 토큰이 비어있거나 조회할 사용자의 아이디로 로그인하세요.");
-//        }
-//        List<SemesterDetailsResponse> semesters = courseService.getSemestersByProfessorId(professorId).stream().map(SemesterDetailsResponse:: fromCourse).collect(Collectors.toList());
-//        return ResponseWithResult.success("학기를 조회하였습니다.", semesters);
-//    }
-
-    /**
      * 사용자가 코스를 조회할 수 있는 연도-학기 정보를 제공
      * @return
      */
@@ -223,11 +170,18 @@ public class CourseController {
      * @return
      */
     @GetMapping("/courses/{courseId}")
-    public Response<CourseResponse> getACourse(@PathVariable(value = "courseId") Long courseId,
+    public Response<CourseResponse> getOne(@PathVariable(value = "courseId") Long courseId,
                                                          @AuthenticationPrincipal org.springframework.security.core.userdetails.User user){
-//        Integer userId = PrincipalUtils.getUserId(user);
-        CourseDTO.Course course = courseService.getACourseById(courseId);
-        return Response.ok(HttpStatus.OK, "수업 정보를 조회하였습니다.", CourseResponse.fromCourse(course));
+
+        // 코스 정보 세팅
+        CourseResponse response = CourseResponse.fromCourse(courseService.getACourseById(courseId));
+        // 코스 이미지 정보 세팅
+        response.setImage(FileResponse.Info.fromFile(fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId).getFirst()));
+        // 코스 역할 세팅
+        response.setRole(courseMemberService.findMemberRoleInClass(Long.parseLong(user.getUsername()), courseId));
+
+
+        return Response.ok(HttpStatus.OK, "수업 정보를 조회하였습니다.", response);
     }
 
     /**
