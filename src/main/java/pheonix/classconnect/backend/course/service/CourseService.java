@@ -2,6 +2,7 @@ package pheonix.classconnect.backend.course.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,8 +55,11 @@ public class CourseService {
                 .semester(dto.getSemester())
                 .professor(dto.getProfessorName())
                 .status(CourseStatus.OPEN)
-                .memberCode("ddd")
+                .memberCode(null)
                 .build();
+
+        // memberCode 생성
+        course.updateMemberCode(generateMemberCode());
 
         // 코스 저장
         CourseEntity saved = courseEntityRepository.save(course);
@@ -319,4 +323,22 @@ public class CourseService {
 //        return new InvitedCourseDTO(Course.fromEntity(course), users, new ArrayList<>());
 //
 //    }
+
+    public String generateMemberCode() {
+        int maxCount = 10;
+        String generatedCode;
+        while(true) {
+            generatedCode = RandomStringUtils.randomAlphanumeric(6);
+
+            if(!courseEntityRepository.existsByMemberCode(generatedCode)) {
+                return generatedCode;
+            }
+
+            maxCount--;
+
+            if (maxCount <= 0)
+                throw new MainApplicationException(ErrorCode.BAK_LOGIC_ERROR, "참여 코드 생성 횟수 제한을 초과했습니다.");
+        }
+
+    }
 }
