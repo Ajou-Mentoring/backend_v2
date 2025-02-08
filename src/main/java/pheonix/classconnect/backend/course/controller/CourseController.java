@@ -47,13 +47,13 @@ public class CourseController {
 
     /**
      * Course 생성 API
-     * @param courseCreateRequestDTO : Course 생성에 필요한 필드를 담은 객체
+     * @param request : Course 생성에 필요한 필드를 담은 객체
      * @param image : Course 대표 이미지
      * @param user : Course 생성하는 Principal 객체
      * @return Response
      */
     @PostMapping(value = "/courses", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
-    public Response<String> create(@RequestPart(value = "course") @Valid CourseCreateRequestDTO courseCreateRequestDTO,
+    public Response<String> create(@RequestPart(value = "course") @Valid CourseCreateRequestDTO request,
                            @RequestPart(value = "image", required = false) MultipartFile image,
                            @AuthenticationPrincipal org.springframework.security.core.userdetails.User user
                            ) {
@@ -65,16 +65,60 @@ public class CourseController {
 
         // 입력값 조립
         CourseDTO.Create newCourse = CourseDTO.Create.builder()
-                .year(courseCreateRequestDTO.getYear())
-                .semester(courseCreateRequestDTO.getSemester())
-                .name(courseCreateRequestDTO.getName())
-                .code(courseCreateRequestDTO.getCourseCode())
-                .professorName(courseCreateRequestDTO.getProfessorName())
+                .year(request.getYear())
+                .semester(request.getSemester())
+                .name(request.getName())
+                .code(request.getCourseCode())
+                .professorName(request.getProfessorName())
                 .build();
 
         courseService.create(newCourse, image);
 
         return Response.ok("수업을 등록하였습니다.");
+    }
+
+    /**
+     * Course 조회 API (학생) -> student의 ID로 참여한 Course 리스트 조회
+     * @param  request : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
+     * @return Response<List<CourseResponse>>
+     */
+    @GetMapping("/courses")
+    public Response<List<CourseResponse>> getCoursesByYearAndSemester(@Valid @ModelAttribute CourseFetchRequestDTO request,
+                                                                      @AuthenticationPrincipal User user){
+        log.info("CourseController.getCoursesByYearAndSemester()");
+        // 요청 검증
+        // 관리자가 아닐 경우 자신이 참여한 코스들만 조회할 수 있다.
+        if (!principalDetailsService.isAdmin(user)) {
+            if (request.getMemberId() == null || request.getMemberId() != Long.parseLong(user.getUsername())) {
+                throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "전체 조회 권한이 없습니다.");
+            }
+        }
+
+        // 요청 생성
+        CourseDTO.Find01 findDto = CourseDTO.Find01.builder()
+                .year(request.getYear())
+                .semester(request.getSemester())
+                .memberId(request.getMemberId())
+                .build();
+
+        List<CourseResponse> courses = courseService.getCourses(findDto).stream()
+                .map(CourseResponse::fromCourse)
+                .toList();
+
+        if (!courses.isEmpty()) {
+            courses.forEach(course -> {
+                course.setRole(courseMemberService.findMemberRoleInClass(Long.parseLong(user.getUsername()), course.getId()));
+            });
+        }
+
+        for (CourseResponse courseResponse : courses) {
+            List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseResponse.getId());
+            if (!images.isEmpty()) {
+                courseResponse.setImage(FileResponse.Info.fromFile(images.getFirst()));
+            }
+        }
+
+        return Response.ok(HttpStatus.OK, "수업 목록을 조회하였습니다.", courses);
     }
 
     /**
@@ -147,37 +191,6 @@ public class CourseController {
 //        List<SemesterDetailsResponse> semesters = courseService.getSemestersByProfessorId(professorId).stream().map(SemesterDetailsResponse:: fromCourse).collect(Collectors.toList());
 //        return ResponseWithResult.success("학기를 조회하였습니다.", semesters);
 //    }
-
-    /**
-     * Course 조회 API (학생) -> student의 ID로 참여한 Course 리스트 조회
-     * @param  req : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
-     * @return
-     */
-    @GetMapping("/courses")
-    public Response<List<CourseResponse>> getCoursesByYearAndSemester(@Valid @ModelAttribute CourseFetchRequestDTO req,
-                                                                     @AuthenticationPrincipal User user){
-
-        // 요청 생성
-        CourseDTO.FetchByYearAndSemesterAndMemberId findDto = CourseDTO.FetchByYearAndSemesterAndMemberId.builder()
-                .year(req.getYear())
-                .semester(req.getSemester())
-                .memberId(req.getUserId())
-                .build();
-
-
-        List<CourseResponse> courses = courseService.getCoursesByYearAndSemester(findDto).stream()
-                .map(CourseResponse::fromCourse)
-                .toList();
-
-        for (CourseResponse courseResponse : courses) {
-            List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseResponse.getId());
-            if (!images.isEmpty()) {
-                courseResponse.setImage(FileResponse.Info.fromFile(images.getFirst()));
-            }
-        }
-
-        return Response.ok(HttpStatus.OK, "수업 목록을 조회하였습니다.", courses);
-    }
 
     /**
      * 사용자가 코스를 조회할 수 있는 연도-학기 정보를 제공

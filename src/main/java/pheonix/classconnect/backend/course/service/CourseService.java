@@ -87,19 +87,19 @@ public class CourseService {
 //
 //    }
 
-    public List<CourseDTO.Course> getCoursesByYearAndSemester(CourseDTO.FetchByYearAndSemesterAndMemberId fetchDto) {
+    public List<CourseDTO.Course> getCourses(CourseDTO.Find01 findDto) {
         List<CourseEntity> courses;
         // 만약 멤버아이디가 null인 경우 모두 조회
-        if (fetchDto.getMemberId() == null) {
-            courses = courseEntityRepository.findAllByYearAndSemester(fetchDto.getYear(), fetchDto.getSemester());
+        if (findDto.getMemberId() == null) {
+            courses = courseEntityRepository.findAllByYearAndSemester(findDto.getYear(), findDto.getSemester());
         }
         else {
-            courses = courseMemberEntityRepository.findByUserIdAndCourseYearAndCourseSemester(fetchDto.getMemberId(), fetchDto.getYear(), fetchDto.getSemester())
+            courses = courseMemberEntityRepository.findByUserIdAndCourseYearAndCourseSemester(findDto.getMemberId(), findDto.getYear(), findDto.getSemester())
                     .stream().map(CourseMemberEntity::getCourse).toList();
         }
 
         if (courses.isEmpty()) return new ArrayList<>();
-
+        log.info("변환: entity -> DTO");
         return courses.stream().map(CourseDTO.Course::fromEntity).toList();
     }
 

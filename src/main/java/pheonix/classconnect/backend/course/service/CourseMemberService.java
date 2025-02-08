@@ -44,6 +44,11 @@ public class CourseMemberService {
         );
     }
 
+    public Short findMemberRoleInClass(Long userId, Long courseId) {
+        return courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(CourseMemberEntity::getRole).orElse((short) 0);
+    }
+
     public List<UserDTO.User> findUsersByCourseIdAndRole(Long courseId, Short role) {
         List<CourseMemberEntity> members = courseMemberEntityRepository.findByCourseIdAndRole(courseId, role);
         if (members.isEmpty())

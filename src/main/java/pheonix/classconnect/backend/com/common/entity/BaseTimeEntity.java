@@ -33,6 +33,8 @@ public class BaseTimeEntity {
     void createdAt() {
         this.createdDate = LocalDate.now();
         this.createdTime = LocalTime.now();
+        this.updatedDate = LocalDate.now();
+        this.updatedTime = LocalTime.now();
     }
 
     @PreUpdate

@@ -16,6 +16,6 @@ public class CourseFetchRequestDTO {
     @NotNull(message = "수업 학기를 입력해주세요.")
     private Short semester;
 
-    private Long userId;
+    private Long memberId;
 
 }
