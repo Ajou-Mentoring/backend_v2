@@ -26,4 +26,5 @@ public interface CourseEntityRepository extends JpaRepository<CourseEntity, Long
     List<Object> findDistinctSemesters();
 
     boolean existsByMemberCode(String memberCode);
+    Optional<CourseEntity> findByMemberCode(String memberCode);
 }
