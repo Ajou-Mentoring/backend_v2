@@ -39,7 +39,7 @@ public class CourseEntity extends BaseTimeEntity {
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     private List<CourseMemberEntity> members;
 
-    @Column(name = "member_code", length = 6)
+    @Column(name = "member_code", length = 6, unique = true)
     private String memberCode;
 
 //    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
@@ -50,7 +50,7 @@ public class CourseEntity extends BaseTimeEntity {
 //    @OnDelete(action = OnDeleteAction.CASCADE)
 //    private List<NotificationEntity> notifications = new ArrayList<>();
 
-    public void changeInvitationCode(String code) {
+    public void updateMemberCode(String code) {
         this.memberCode = code;
     }
 

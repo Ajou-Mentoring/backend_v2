@@ -2,10 +2,12 @@ package pheonix.classconnect.backend.course.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
+import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
@@ -23,9 +25,7 @@ import pheonix.classconnect.backend.course.repository.CourseMemberEntityReposito
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -54,8 +54,11 @@ public class CourseService {
                 .semester(dto.getSemester())
                 .professor(dto.getProfessorName())
                 .status(CourseStatus.OPEN)
-                .memberCode("ddd")
+                .memberCode(null)
                 .build();
+
+        // memberCode 생성
+        course.updateMemberCode(generateMemberCode());
 
         // 코스 저장
         CourseEntity saved = courseEntityRepository.save(course);
@@ -68,9 +71,22 @@ public class CourseService {
     public void delete(Long courseId) {
         // 코스가 존재하는지 체크
         if (courseEntityRepository.existsById(courseId)) {
+
             courseEntityRepository.deleteById(courseId);
+
+            // 코스 이미지 삭제
+            List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId);
+            if (!images.isEmpty()) {
+                for (File image : images) {
+                    fileStorage.deleteByFileId(image.getId());
+                }
+            }
+
         }
-        throw new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, "삭제할 코스를 찾을 수 없습니다.");
+        else {
+            throw new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, "삭제할 코스를 찾을 수 없습니다.");
+        }
+
 
     }
 
@@ -83,15 +99,30 @@ public class CourseService {
 //
 //    }
 
-    public List<CourseDTO.Course> getCoursesByYearAndSemester(CourseDTO.FetchByYearAndSemesterAndMemberId fetchDto) {
+    public List<CourseDTO.Course> getCourses(CourseDTO.Find01 findDto) {
         List<CourseEntity> courses;
-        // 만약 멤버아이디가 null인 경우 모두 조회
-        if (fetchDto.getMemberId() == null) {
-            courses = courseEntityRepository.findAllByYearAndSemester(fetchDto.getYear(), fetchDto.getSemester());
+
+        // 연도별/학기별 조회인 경우
+        if (findDto.getYear() != null && findDto.getSemester() != null) {
+            // 만약 멤버아이디가 null인 경우 모두 조회
+            if (findDto.getMemberId() == null) {
+                courses = courseEntityRepository.findAllByYearAndSemester(findDto.getYear(), findDto.getSemester());
+            }
+            else {
+                courses = courseMemberEntityRepository.findByUserIdAndCourseYearAndCourseSemester(findDto.getMemberId(), findDto.getYear(), findDto.getSemester())
+                        .stream().map(CourseMemberEntity::getCourse).toList();
+            }
         }
+        // 전체 조회
         else {
-            courses = courseMemberEntityRepository.findByUserIdAndCourseYearAndCourseSemester(fetchDto.getMemberId(), fetchDto.getYear(), fetchDto.getSemester())
-                    .stream().map(CourseMemberEntity::getCourse).toList();
+            // memberID로 조회
+            if (findDto.getMemberId() != null) {
+                courses = courseMemberEntityRepository.findByUserIdOrderByCourseYearDescCourseSemesterDesc(findDto.getMemberId())
+                        .stream().map(CourseMemberEntity::getCourse).toList();
+            }
+            else {
+                courses = courseEntityRepository.findAll();
+            }
         }
 
         if (courses.isEmpty()) return new ArrayList<>();
@@ -319,4 +350,22 @@ public class CourseService {
 //        return new InvitedCourseDTO(Course.fromEntity(course), users, new ArrayList<>());
 //
 //    }
+
+    public String generateMemberCode() {
+        int maxCount = 10;
+        String generatedCode;
+        while(true) {
+            generatedCode = RandomStringUtils.randomAlphanumeric(6);
+
+            if(!courseEntityRepository.existsByMemberCode(generatedCode)) {
+                return generatedCode;
+            }
+
+            maxCount--;
+
+            if (maxCount <= 0)
+                throw new MainApplicationException(ErrorCode.BAK_LOGIC_ERROR, "참여 코드 생성 횟수 제한을 초과했습니다.");
+        }
+
+    }
 }

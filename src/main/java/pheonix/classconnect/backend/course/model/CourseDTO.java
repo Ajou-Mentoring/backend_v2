@@ -61,7 +61,7 @@ public class CourseDTO {
 
     @Data
     @Builder
-    public static class FetchByYearAndSemesterAndMemberId {
+    public static class Find01 {
         @NotNull(message = "수업 연도를 입력해주세요.")
         private String year;
         @NotNull(message = "수업 학기를 입력해주세요.")

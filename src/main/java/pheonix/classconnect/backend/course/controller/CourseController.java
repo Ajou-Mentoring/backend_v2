@@ -16,11 +16,13 @@ import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.common.model.Response;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.course.constants.CourseRole;
+import pheonix.classconnect.backend.course.constants.Semester;
 import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
 import pheonix.classconnect.backend.course.model.CourseDTO;
 import pheonix.classconnect.backend.course.model.request.CourseCreateRequestDTO;
 import pheonix.classconnect.backend.course.model.request.CourseFetchRequestDTO;
 import pheonix.classconnect.backend.course.model.response.CourseResponse;
+import pheonix.classconnect.backend.course.model.response.MentorResponse;
 import pheonix.classconnect.backend.course.model.response.SemesterDetailsResponse;
 import pheonix.classconnect.backend.course.service.CourseService;
 import pheonix.classconnect.backend.course.service.CourseMemberService;
@@ -28,9 +30,8 @@ import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 import pheonix.classconnect.backend.security.service.PrincipalDetailsService;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,15 +48,15 @@ public class CourseController {
 
     /**
      * Course 생성 API
-     * @param courseCreateRequestDTO : Course 생성에 필요한 필드를 담은 객체
+     * @param request : Course 생성에 필요한 필드를 담은 객체
      * @param image : Course 대표 이미지
      * @param user : Course 생성하는 Principal 객체
      * @return Response
      */
     @PostMapping(value = "/courses", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
-    public Response<String> create(@RequestPart(value = "course") @Valid CourseCreateRequestDTO courseCreateRequestDTO,
+    public Response<String> create(@RequestPart(value = "course") @Valid CourseCreateRequestDTO request,
                            @RequestPart(value = "image", required = false) MultipartFile image,
-                           @AuthenticationPrincipal org.springframework.security.core.userdetails.User user
+                           @AuthenticationPrincipal User user
                            ) {
 
         // 요청 검증 - 관리자인지
@@ -65,16 +66,61 @@ public class CourseController {
 
         // 입력값 조립
         CourseDTO.Create newCourse = CourseDTO.Create.builder()
-                .year(courseCreateRequestDTO.getYear())
-                .semester(courseCreateRequestDTO.getSemester())
-                .name(courseCreateRequestDTO.getName())
-                .code(courseCreateRequestDTO.getCourseCode())
-                .professorName(courseCreateRequestDTO.getProfessorName())
+                .year(request.getYear())
+                .semester(request.getSemester())
+                .name(request.getName())
+                .code(request.getCourseCode())
+                .professorName(request.getProfessorName())
                 .build();
 
         courseService.create(newCourse, image);
 
         return Response.ok("수업을 등록하였습니다.");
+    }
+
+    /**
+     * Course 조회 API -> 
+     * 1. 관리자 조회 시 연도/학기 역순으로 조회
+     * 2. 관리자 조회 시 연도/학기별 조회
+     * 3. 학생 조회 시 자신이 참여한 코스 연도/학기 역순으로 조회
+     * @param  request : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
+     * @return Response<List<CourseResponse>>
+     */
+    @GetMapping("/courses")
+    public Response<List<CourseResponse>> getCourses(@Valid @ModelAttribute CourseFetchRequestDTO request,
+                                                                      @AuthenticationPrincipal User user){
+        log.info("CourseController.getCoursesByYearAndSemester()");
+        // 요청 검증
+        // 관리자가 아닐 경우 자신이 참여한 코스들만 조회할 수 있다.
+        if (!principalDetailsService.isAdmin(user)) {
+            request.setMemberId(Long.parseLong(user.getUsername()));
+        }
+
+        // 요청 생성
+        CourseDTO.Find01 findDto = CourseDTO.Find01.builder()
+                .year(request.getYear())
+                .semester(request.getSemester())
+                .memberId(request.getMemberId())
+                .build();
+
+        List<CourseResponse> courses = courseService.getCourses(findDto).stream()
+                .map(CourseResponse::fromCourse)
+                .toList();
+
+        if (!courses.isEmpty()) {
+            courses.forEach(course -> {
+                course.setRole(courseMemberService.findMemberRoleInClass(Long.parseLong(user.getUsername()), course.getId()));
+            });
+        }
+
+        for (CourseResponse courseResponse : courses) {
+            List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseResponse.getId());
+            if (!images.isEmpty()) {
+                courseResponse.setImage(FileResponse.Info.fromFile(images.getFirst()));
+            }
+        }
+
+        return Response.ok(HttpStatus.OK, "수업 목록을 조회하였습니다.", courses);
     }
 
     /**
@@ -88,95 +134,13 @@ public class CourseController {
                            @AuthenticationPrincipal org.springframework.security.core.userdetails.User user) {
 
         // 요청 검증 - 관리자인지
-        if (principalDetailsService.isAdmin(user)) {
+        if (!principalDetailsService.isAdmin(user)) {
             throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "관리자 권한이 없습니다.");
         }
 
         courseService.delete(courseId);
 
         return Response.ok("수업을 삭제하였습니다.");
-    }
-
-    /**
-     * Course 조회 API (교수) -> professor의 ID로 개설된 Course 리스트 조회
-     * @param professorId : 교수 ID
-     * @param courseFetchRequestDTO : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
-     * @return
-     */
-//    @GetMapping("/professors/{professorId}/courses")
-//    public ResponseWithResult<List<CourseResponse>> getCoursesByProfessorId(@PathVariable(value = "professorId") Integer professorId,
-//                                                                            @Valid @ModelAttribute CourseFetchRequestDTO courseFetchRequestDTO,
-//                                                                            @AuthenticationPrincipal org.springframework.security.core.userdetails.User user){
-//
-//        Integer userId = PrincipalUtils.getUserId(user);
-//        if(userId != professorId){
-//            throw new MainApplicationException(ErrorCode.INVALID_PERMISSION, "잘못된 접근입니다.");
-//        }
-//
-//        List<CourseResponse> courses = courseService.getCoursesByProfessorId(professorId,courseFetchRequestDTO.getYear(), courseFetchRequestDTO.getSemester() ).stream()
-//                .peek(Course::addProfessor)
-//                .map(CourseResponse::fromCourse)
-//                .collect(Collectors.toList());
-//
-//        List<CourseResponse> updatedCourses = courses.stream()
-//                .map(courseResponse -> {
-//                    List<Attachment> attachments = fileStorage.getAttachmentList(domainType, courseResponse.getId());
-//                    if (attachments.size() > 0){
-//                        courseResponse.setImage(AttachmentResponse.Info.fromAttachment(attachments.get(0)));
-//                    }
-//                    return courseResponse;
-//                })
-//                .collect(Collectors.toList());
-//
-//        return ResponseWithResult.success("수업 목록을 조회하였습니다.", updatedCourses);
-//    }
-
-    /**
-     * Semester 조회 API (교수) : 교수 아이디로 강의를 개설한 학기 리스트를 조회하는
-     * @param professorId : 교수 아이디
-     * @param principal : 조회 요청을 보낸
-     * @return
-     */
-//    @GetMapping("/professors/{professorId}/semesters")
-//    public ResponseWithResult<List<SemesterDetailsResponse>> getSemestersByProfessorId(@PathVariable(value = "professorId") Integer professorId,
-//                                                                                       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal){
-//        Integer userId = PrincipalUtils.getUserId(principal);
-//        if(userId != professorId){
-//            throw new MainApplicationException(ErrorCode.INVALID_PERMISSION, "잘못된 접근입니다. 토큰이 비어있거나 조회할 사용자의 아이디로 로그인하세요.");
-//        }
-//        List<SemesterDetailsResponse> semesters = courseService.getSemestersByProfessorId(professorId).stream().map(SemesterDetailsResponse:: fromCourse).collect(Collectors.toList());
-//        return ResponseWithResult.success("학기를 조회하였습니다.", semesters);
-//    }
-
-    /**
-     * Course 조회 API (학생) -> student의 ID로 참여한 Course 리스트 조회
-     * @param  req : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
-     * @return
-     */
-    @GetMapping("/courses")
-    public Response<List<CourseResponse>> getCoursesByYearAndSemester(@Valid @ModelAttribute CourseFetchRequestDTO req,
-                                                                     @AuthenticationPrincipal User user){
-
-        // 요청 생성
-        CourseDTO.FetchByYearAndSemesterAndMemberId findDto = CourseDTO.FetchByYearAndSemesterAndMemberId.builder()
-                .year(req.getYear())
-                .semester(req.getSemester())
-                .memberId(req.getUserId())
-                .build();
-
-
-        List<CourseResponse> courses = courseService.getCoursesByYearAndSemester(findDto).stream()
-                .map(CourseResponse::fromCourse)
-                .toList();
-
-        for (CourseResponse courseResponse : courses) {
-            List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseResponse.getId());
-            if (!images.isEmpty()) {
-                courseResponse.setImage(FileResponse.Info.fromFile(images.getFirst()));
-            }
-        }
-
-        return Response.ok(HttpStatus.OK, "수업 목록을 조회하였습니다.", courses);
     }
 
     /**
@@ -210,11 +174,18 @@ public class CourseController {
      * @return
      */
     @GetMapping("/courses/{courseId}")
-    public Response<CourseResponse> getACourse(@PathVariable(value = "courseId") Long courseId,
+    public Response<CourseResponse> getOne(@PathVariable(value = "courseId") Long courseId,
                                                          @AuthenticationPrincipal org.springframework.security.core.userdetails.User user){
-//        Integer userId = PrincipalUtils.getUserId(user);
-        CourseDTO.Course course = courseService.getACourseById(courseId);
-        return Response.ok(HttpStatus.OK, "수업 정보를 조회하였습니다.", CourseResponse.fromCourse(course));
+
+        // 코스 정보 세팅
+        CourseResponse response = CourseResponse.fromCourse(courseService.getACourseById(courseId));
+        // 코스 이미지 정보 세팅
+        response.setImage(FileResponse.Info.fromFile(fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId).getFirst()));
+        // 코스 역할 세팅
+        response.setRole(courseMemberService.findMemberRoleInClass(Long.parseLong(user.getUsername()), courseId));
+
+
+        return Response.ok(HttpStatus.OK, "수업 정보를 조회하였습니다.", response);
     }
 
     /**
@@ -224,23 +195,102 @@ public class CourseController {
      * @return
      */
     @GetMapping("/courses/{courseId}/mentors")
-    public Response<List<UserDTO.User>> getMentorsInCourse(@PathVariable(value = "courseId") Long courseId,
-                                                           @AuthenticationPrincipal org.springframework.security.core.userdetails.User user){
+    public Response<List<MentorResponse>> getMentors(
+            @PathVariable(value = "courseId") Long courseId,
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.User user){
 
-//        Integer userId = PrincipalUtils.getUserId(user);
-        //List<User> mentors = courseService.getMentorsInCourse(courseId);
-        List<UserDTO.User> mentors = courseMemberService.findUsersByCourseIdAndRole(courseId, CourseRole.MENTOR);
-        return Response.ok(HttpStatus.OK, "수업 정보를 조회하였습니다.",mentors);
+        log.info("CourseController.getMentors()");
+        // 요청 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "사용자 인증 정보가 없습니다.");
+        }
+
+        // 본처리
+        List<MentorResponse> result = new ArrayList<>();
+        // 1. courseId == 0 이면 현재 연도/학기 기준 참여한 모든 클래스의 멘토 정보 가져오기
+        if (courseId == 0) {
+            /*현재 날짜*/
+            LocalDate now = LocalDate.now();
+            /*현재 연도*/
+            String year = String.valueOf(now.getYear());
+            /*현재 월*/
+            int month = now.getMonthValue();
+            /*현재 학기*/
+            Short semester;
+            if (month >= 3 && month < 7) {
+                semester = Semester.SPRING;
+            } else if (month >= 7 && month < 9) {
+                semester = Semester.SUMMER;
+            } else if (month >= 9) {
+                semester = Semester.AUTUMN;
+            } else {
+                semester = Semester.WINTER;
+            }
+
+            CourseDTO.Find01 findDto = CourseDTO.Find01.builder()
+                    .memberId(Long.parseLong(user.getUsername()))
+                    .year(year)
+                    .semester(semester)
+                    .build();
+
+            List<CourseDTO.Course> courses = courseService.getCourses(findDto);
+
+            for (CourseDTO.Course course : courses) {
+                // 내가 멘티가 아니면 skip
+                if (!Objects.equals(courseMemberService.findMemberRoleInClass(
+                        Long.parseLong(user.getUsername()),
+                        course.getId()
+                ), CourseRole.MENTEE))
+                    continue;
+
+                List<UserDTO.User> mentors = courseMemberService.findMentors(courseId);
+                if (mentors.isEmpty())
+                    continue;
+                for (UserDTO.User mentor : mentors) {
+                    result.add(MentorResponse.builder()
+                            .id(mentor.getId())
+                            .name(mentor.getName())
+                            .email(mentor.getEmail())
+                            .courseName(course.getName())
+                            .mentoringCount(0)
+                            .earliestSchedule("현재 가능한 스케줄이 없습니다.")
+                            .build());
+                }
+            }
+        }
+        else {
+            List<UserDTO.User> mentors = courseMemberService.findMentors(courseId);
+            if (!mentors.isEmpty()) {
+                for (UserDTO.User mentor : mentors) {
+                    result.add(MentorResponse.builder()
+                            .id(mentor.getId())
+                            .name(mentor.getName())
+                            .email(mentor.getEmail())
+                            .courseName(courseService.getACourseById(courseId).getName())
+                            .mentoringCount(0)
+                            .earliestSchedule("현재 가능한 스케줄이 없습니다.")
+                            .build());
+                }
+            }
+
+
+        }
+
+        return Response.ok(HttpStatus.OK, "멘토 정보를 조회하였습니다.", result);
     }
 
-//    @PostMapping("/courses/{courseId}/invites")
-//    public Response inviteStudentsToCourse(@PathVariable(value = "courseId") Integer courseId, @RequestBody @Valid InviteStudentToCourseDTO inviteStudentToCourseDTO,
-//                                           @AuthenticationPrincipal org.springframework.security.core.userdetails.User user){
-//
-//        Integer userId = PrincipalUtils.getUserId(user);
-//        courseService.inviteStudentsToCourse(courseId, inviteStudentToCourseDTO, userId );
-//        return Response.success("클래스에 학생들을 초대하였습니다.");
-//    }
+    @PostMapping("/courses/join")
+    public Response joinCourse(
+            @RequestParam @Valid String memberCode,
+            @AuthenticationPrincipal User user){
+
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "사용자 정보가 없습니다.");
+        }
+        courseMemberService.includeMemberToCourse(Long.parseLong(user.getUsername()), memberCode);
+
+        return Response.ok("코스에 참가했습니다.");
+    }
 
 //    @GetMapping("/courses/{courseId}/participants")
 //    public ResponseWithResult<List<ParticipantDTO>> getStudentsParticipants(@PathVariable(value = "courseId") Integer courseId,

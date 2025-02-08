@@ -24,4 +24,7 @@ public interface CourseEntityRepository extends JpaRepository<CourseEntity, Long
 
     @Query("SELECT DISTINCT c.year, c.semester FROM Course c")
     List<Object> findDistinctSemesters();
+
+    boolean existsByMemberCode(String memberCode);
+    Optional<CourseEntity> findByMemberCode(String memberCode);
 }

@@ -27,25 +27,23 @@ public class CourseResponse {
 
     private Short semester;
 
-    private Integer studentCount;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime  updatedAt;
+    private Integer numMembers;
 
     private FileResponse.Info image;
+
+    @Builder.Default
+    private Short role = 0; /*클래스 역할 : 0-없음 1-멘티 2-멘토 */
 
 
     public static CourseResponse fromCourse(CourseDTO.Course course){
         return CourseResponse.builder()
                 .id(course.getId())
                 .professor(course.getProfessor())
+                .courseCode(course.getCourseCode())
                 .name(course.getName())
                 .year(course.getYear())
                 .semester(course.getSemester())
-                .studentCount(course.getMembers().size())
-                .createdAt(course.getCreatedAt())
-                .updatedAt(course.getUpdatedAt())
+                .numMembers(course.getMembers().size())
                 .image(null)
                 .build();
     }
