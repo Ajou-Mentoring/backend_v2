@@ -1,4 +1,4 @@
-package pheonix.classconnect.backend.course.repository;
+package pheonix.classconnect.backend.course.model;
 
 public interface SemesterMapper {
     String getYear();

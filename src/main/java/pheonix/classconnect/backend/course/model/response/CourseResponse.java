@@ -1,6 +1,7 @@
 package pheonix.classconnect.backend.course.model.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
@@ -11,11 +12,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
+@Builder
 public class CourseResponse {
 
     private Long id;
 
-    private ProfessorResponse professor;
+    private String professor;
 
     private String name;
 
@@ -35,12 +37,16 @@ public class CourseResponse {
 
 
     public static CourseResponse fromCourse(CourseDTO.Course course){
-        ProfessorResponse professor = ProfessorResponse.builder()
-                            .id(course.getProfessor().getId())
-                            .name(course.getProfessor().getName())
-                            .professorNo(course.getProfessor().getProfessorNo())
-                            .build();
-
-        return new CourseResponse(course.getId(), professor, course.getName(), course.getCourseCode(), course.getYear(), course.getSemester(), course.getMembers().size(), course.getCreatedAt(), course.getUpdatedAt(), null);
+        return CourseResponse.builder()
+                .id(course.getId())
+                .professor(course.getProfessor())
+                .name(course.getName())
+                .year(course.getYear())
+                .semester(course.getSemester())
+                .studentCount(course.getMembers().size())
+                .createdAt(course.getCreatedAt())
+                .updatedAt(course.getUpdatedAt())
+                .image(null)
+                .build();
     }
 }

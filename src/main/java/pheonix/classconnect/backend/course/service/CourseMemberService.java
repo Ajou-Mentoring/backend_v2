@@ -8,25 +8,24 @@ import pheonix.classconnect.backend.com.user.entity.UserEntity;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.course.constants.CourseRole;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
-import pheonix.classconnect.backend.course.entity.UserCourseEntity;
+import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
 import pheonix.classconnect.backend.course.model.request.RemoveMemberFromCourseDTO;
 import pheonix.classconnect.backend.course.model.request.UpdateMemberRoleDTO;
-import pheonix.classconnect.backend.course.repository.UserCourseEntityRepository;
+import pheonix.classconnect.backend.course.repository.CourseMemberEntityRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserCourseService {
-    private final UserCourseEntityRepository userCourseEntityRepository;
+public class CourseMemberService {
+    private final CourseMemberEntityRepository courseMemberEntityRepository;
 
     public boolean isUserMentorInAnyClass(Long userId){
-            return userCourseEntityRepository.existsByUserIdAndRole(userId, CourseRole.MENTOR);
+            return courseMemberEntityRepository.existsByUserIdAndRole(userId, CourseRole.MENTOR);
     }
 
 //    public boolean isUserInCourse(UserEntity user, CourseEntity course) {
@@ -39,51 +38,52 @@ public class UserCourseService {
 ////                .anyMatch(c -> c != null && c.getId().equals(course.getId()));
 //    }
 
-    public UserCourseEntity findUserRoleInClass(Long userId, Long courseId){
-        return userCourseEntityRepository.findByUserIdAndCourseId(userId, courseId).orElseThrow(() ->
+    public CourseMemberEntity findUserRoleInClass(Long userId, Long courseId){
+        return courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId).orElseThrow(() ->
             new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, String.format("userId %s is not in class which id is %s", userId, courseId))
         );
     }
 
     public List<UserDTO.User> findUsersByCourseIdAndRole(Long courseId, Short role) {
-        List<UserCourseEntity> members = userCourseEntityRepository.findByCourseIdAndRole(courseId, role);
+        List<CourseMemberEntity> members = courseMemberEntityRepository.findByCourseIdAndRole(courseId, role);
         if (members.isEmpty())
             return new ArrayList<>();
         else {
             return members.stream()
-                    .map(UserCourseEntity::getUser)
+                    .map(CourseMemberEntity::getUser)
                     .map(UserDTO.User::fromEntity).toList();
         }
     }
 
 
 
-    public List<UserCourseEntity> findByUserIdAndCourseYearAndCourseSemester(Long userId, String year, Short semester){
-        return userCourseEntityRepository.findByUserIdAndCourseYearAndCourseSemester(userId, year, semester);
+    public List<CourseMemberEntity> findByUserIdAndCourseYearAndCourseSemester(Long userId, String year, Short semester){
+        return courseMemberEntityRepository.findByUserIdAndCourseYearAndCourseSemester(userId, year, semester);
     }
 
 
     @Transactional
-    public void saveAll(List<UserCourseEntity> userCourseEntities) {
+    public void saveAll(List<CourseMemberEntity> userCourseEntities) {
 //        for (UserCourseEntity uc : userCourseEntities) {
 //            log.info("uc {} {} {}", uc.getCourse().getId(), uc.getCourse().getCourseCode(), uc.getUser().getId());
 //            userCourseEntityRepository.save(uc);
 //        }
-         userCourseEntityRepository.saveAll(userCourseEntities);
+         courseMemberEntityRepository.saveAll(userCourseEntities);
     }
 
-    public void removeMemberFromCourse(CourseEntity course, RemoveMemberFromCourseDTO removeMemberFromCourseDTO) {
-        List<Long> memberIds = removeMemberFromCourseDTO.getMemberIds();
-        if(!memberIds.isEmpty()){
-            userCourseEntityRepository.deleteMembersFromCourse(course.getId(), memberIds);
-        }
+    public void excludeMemberFromCourse(Long courseId, Long userId) {
+        // 입력값 검증
+        CourseMemberEntity member = courseMemberEntityRepository.findByUserIdAndCourseId(courseId, userId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, String.format("멤버를 찾을 수 없습니니다. 코스 : [%d]  유저 : [%d]", courseId, userId)));
+
+        courseMemberEntityRepository.delete(member);
     }
 
     public void updateMemberRoleInCourse(CourseEntity course, UserEntity user, UpdateMemberRoleDTO updateMemberRoleDTO) {
-        UserCourseEntity courseMember = userCourseEntityRepository.findByUserIdAndCourseId( user.getId(), course.getId()).orElseThrow(
+        CourseMemberEntity courseMember = courseMemberEntityRepository.findByUserIdAndCourseId( user.getId(), course.getId()).orElseThrow(
                 () -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "해당 유저가 클래스내에 존재하지 않습니다."));
         courseMember.setRole(updateMemberRoleDTO.getRole());
-        userCourseEntityRepository.save(courseMember);
+        courseMemberEntityRepository.save(courseMember);
     }
 
 

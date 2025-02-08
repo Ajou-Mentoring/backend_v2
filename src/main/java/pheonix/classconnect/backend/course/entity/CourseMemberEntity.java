@@ -4,11 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
 
-@Entity(name= "UserCourse")
-@Table(name = "UserCourse")
+@Entity(name= "CourseMember")
+@Table(name = "CourseMember")
 @Getter @Setter
 @Builder @AllArgsConstructor @NoArgsConstructor
-public class UserCourseEntity {
+public class CourseMemberEntity {
 
     @EmbeddedId
     private UserCourseId id;
