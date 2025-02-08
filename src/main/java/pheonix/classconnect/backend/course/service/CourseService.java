@@ -25,9 +25,7 @@ import pheonix.classconnect.backend.course.repository.CourseMemberEntityReposito
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -103,17 +101,32 @@ public class CourseService {
 
     public List<CourseDTO.Course> getCourses(CourseDTO.Find01 findDto) {
         List<CourseEntity> courses;
-        // 만약 멤버아이디가 null인 경우 모두 조회
-        if (findDto.getMemberId() == null) {
-            courses = courseEntityRepository.findAllByYearAndSemester(findDto.getYear(), findDto.getSemester());
+
+        // 연도별/학기별 조회인 경우
+        if (findDto.getYear() != null && findDto.getSemester() != null) {
+            // 만약 멤버아이디가 null인 경우 모두 조회
+            if (findDto.getMemberId() == null) {
+                courses = courseEntityRepository.findAllByYearAndSemester(findDto.getYear(), findDto.getSemester());
+            }
+            else {
+                courses = courseMemberEntityRepository.findByUserIdAndCourseYearAndCourseSemester(findDto.getMemberId(), findDto.getYear(), findDto.getSemester())
+                        .stream().map(CourseMemberEntity::getCourse).toList();
+            }
         }
+        // 전체 조회
         else {
-            courses = courseMemberEntityRepository.findByUserIdAndCourseYearAndCourseSemester(findDto.getMemberId(), findDto.getYear(), findDto.getSemester())
-                    .stream().map(CourseMemberEntity::getCourse).toList();
+            // memberID로 조회
+            if (findDto.getMemberId() != null) {
+                courses = courseMemberEntityRepository.findByUserIdOrderByCourseYearDescCourseSemesterDesc(findDto.getMemberId())
+                        .stream().map(CourseMemberEntity::getCourse).toList();
+            }
+            else {
+                courses = courseEntityRepository.findAll();
+            }
         }
 
         if (courses.isEmpty()) return new ArrayList<>();
-        log.info("변환: entity -> DTO");
+
         return courses.stream().map(CourseDTO.Course::fromEntity).toList();
     }
 

@@ -55,7 +55,7 @@ public class CourseController {
     @PostMapping(value = "/courses", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
     public Response<String> create(@RequestPart(value = "course") @Valid CourseCreateRequestDTO request,
                            @RequestPart(value = "image", required = false) MultipartFile image,
-                           @AuthenticationPrincipal org.springframework.security.core.userdetails.User user
+                           @AuthenticationPrincipal User user
                            ) {
 
         // 요청 검증 - 관리자인지
@@ -78,12 +78,15 @@ public class CourseController {
     }
 
     /**
-     * Course 조회 API (학생) -> student의 ID로 참여한 Course 리스트 조회
+     * Course 조회 API -> 
+     * 1. 관리자 조회 시 연도/학기 역순으로 조회
+     * 2. 관리자 조회 시 연도/학기별 조회
+     * 3. 학생 조회 시 자신이 참여한 코스 연도/학기 역순으로 조회
      * @param  request : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
      * @return Response<List<CourseResponse>>
      */
     @GetMapping("/courses")
-    public Response<List<CourseResponse>> getCoursesByYearAndSemester(@Valid @ModelAttribute CourseFetchRequestDTO request,
+    public Response<List<CourseResponse>> getCourses(@Valid @ModelAttribute CourseFetchRequestDTO request,
                                                                       @AuthenticationPrincipal User user){
         log.info("CourseController.getCoursesByYearAndSemester()");
         // 요청 검증

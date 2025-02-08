@@ -10,10 +10,8 @@ import lombok.Setter;
 @AllArgsConstructor @NoArgsConstructor
 public class CourseFetchRequestDTO {
 
-    @NotNull(message = "수업 연도를 입력해주세요.")
     private String year;
 
-    @NotNull(message = "수업 학기를 입력해주세요.")
     private Short semester;
 
     private Long memberId;

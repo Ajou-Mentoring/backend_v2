@@ -1,5 +1,6 @@
 package pheonix.classconnect.backend.course.repository;
 
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -29,6 +30,8 @@ public interface CourseMemberEntityRepository extends JpaRepository<CourseMember
     @Modifying
     @Query("DELETE FROM CourseMember uc WHERE uc.course.id = :courseId AND uc.user.id IN :memberIds")
     void deleteMembersFromCourse(@Param("courseId") Long courseId, @Param("memberIds") List<Long> memberIds);
+
+    List<CourseMemberEntity> findByUserIdOrderByCourseYearDescCourseSemesterDesc(@NotNull(message = "멤버 아이디를 입력해주세요.") Long memberId);
 
 
 //    @Query("SELECT DISTINCT uc.user FROM UserCourse uc " +
