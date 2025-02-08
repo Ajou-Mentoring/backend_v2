@@ -12,8 +12,6 @@ import java.util.List;
 @Table(name = "Course")
 @Getter @Setter
 @Builder @AllArgsConstructor @NoArgsConstructor
-@SQLDelete(sql = "UPDATE Course SET deleted_at = NOW() where id = ?")
-@Where(clause = "deleted_at is NULL")
 public class CourseEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
