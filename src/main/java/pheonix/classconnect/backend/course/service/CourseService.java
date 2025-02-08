@@ -12,16 +12,14 @@ import pheonix.classconnect.backend.com.user.repository.UserRepository;
 import pheonix.classconnect.backend.course.constants.CourseRole;
 import pheonix.classconnect.backend.course.constants.CourseStatus;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
-import pheonix.classconnect.backend.course.entity.ProfessorEntity;
-import pheonix.classconnect.backend.course.entity.UserCourseEntity;
+import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
 import pheonix.classconnect.backend.course.model.CourseDTO;
 import pheonix.classconnect.backend.course.model.CourseDetail;
 import pheonix.classconnect.backend.course.model.request.RemoveMemberFromCourseDTO;
 import pheonix.classconnect.backend.course.model.request.UpdateCourseDTO;
 import pheonix.classconnect.backend.course.repository.CourseEntityRepository;
-import pheonix.classconnect.backend.course.repository.ProfessorRepository;
-import pheonix.classconnect.backend.course.repository.SemesterMapper;
-import pheonix.classconnect.backend.course.repository.UserCourseEntityRepository;
+import pheonix.classconnect.backend.course.model.SemesterMapper;
+import pheonix.classconnect.backend.course.repository.CourseMemberEntityRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 
@@ -34,18 +32,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CourseService {
     private final CourseEntityRepository courseEntityRepository;
-    //private final UserService userService;
     private final UserRepository userRepository;
-    //private final CourseInviteService courseInviteService;
-    //private final UserCourseService userCourseService;
-    private final UserCourseEntityRepository userCourseEntityRepository;
-    private final ProfessorRepository professorRepository;
+    private final CourseMemberEntityRepository courseMemberEntityRepository;
     private final FileStorage fileStorage;
-
-    public CourseEntity findCourseByIdElseThrow(Long courseId) {
-        return courseEntityRepository.findById(courseId)
-                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, String.format("코스를 찾을 수 없습니다. [%s]", courseId)));
-    }
 
     @Transactional
     public void create(CourseDTO.Create dto, MultipartFile image) {
@@ -57,18 +46,15 @@ public class CourseService {
 
         log.info("클래스 생성 : [{}]", dto);
 
-        ProfessorEntity professor = professorRepository.findById(dto.getProfessorId())
-                .orElse(null);
-
         CourseEntity course = CourseEntity.builder()
                 .id(null)
                 .name(dto.getName())
                 .code(dto.getCode())
                 .year(dto.getYear())
                 .semester(dto.getSemester())
-                .professor(professor)
+                .professor(dto.getProfessorName())
                 .status(CourseStatus.OPEN)
-                .invitationCode("ddd")
+                .memberCode("ddd")
                 .build();
 
         // 코스 저장
@@ -104,8 +90,8 @@ public class CourseService {
             courses = courseEntityRepository.findAllByYearAndSemester(fetchDto.getYear(), fetchDto.getSemester());
         }
         else {
-            courses = userCourseEntityRepository.findByUserIdAndCourseYearAndCourseSemester(fetchDto.getMemberId(), fetchDto.getYear(), fetchDto.getSemester())
-                    .stream().map(UserCourseEntity::getCourse).toList();
+            courses = courseMemberEntityRepository.findByUserIdAndCourseYearAndCourseSemester(fetchDto.getMemberId(), fetchDto.getYear(), fetchDto.getSemester())
+                    .stream().map(CourseMemberEntity::getCourse).toList();
         }
 
         if (courses.isEmpty()) return new ArrayList<>();
@@ -117,7 +103,7 @@ public class CourseService {
         log.info("getSemesterByStudentId : {}", studentId);
 
         // 유저가 참여한 모든 코스 정보를 찾는다.
-        List<SemesterMapper> semesters = userCourseEntityRepository.findDistinctSemestersByUserId(studentId);
+        List<SemesterMapper> semesters = courseMemberEntityRepository.findDistinctSemestersByUserId(studentId);
 
         if (semesters.isEmpty()) {
             return new ArrayList<>();
@@ -152,14 +138,14 @@ public class CourseService {
         courseEntityRepository.findById(courseId)
                 .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, "코스를 찾을 수 없습니다."));
 
-        List<UserCourseEntity> members = userCourseEntityRepository.findByCourseIdAndRole(courseId, CourseRole.MENTOR);
+        List<CourseMemberEntity> members = courseMemberEntityRepository.findByCourseIdAndRole(courseId, CourseRole.MENTOR);
 
         if (members.isEmpty()) {
             return new ArrayList<>();
         }
 
         return members.stream()
-                .map(UserCourseEntity::getUser)
+                .map(CourseMemberEntity::getUser)
                 .map(UserDTO.User::fromEntity)
                 .toList();
 
@@ -266,13 +252,14 @@ public class CourseService {
 
 
     @Transactional
-    public CourseEntity updateCourse(Long courseId, UpdateCourseDTO updateCourseDTO) {
-        CourseEntity course = this.findCourseByIdElseThrow(courseId);
+    public void updateCourse(Long courseId, UpdateCourseDTO updateCourseDTO) {
+        CourseEntity course = courseEntityRepository.findById(courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, String.format("코스 수정 대상을 찾을 수 없습니다. [%d]", courseId)));
+
         course.setCode(updateCourseDTO.getCourseCode());
         course.setName(updateCourseDTO.getName());
 
         courseEntityRepository.save(course);
-        return course;
     }
 
 
@@ -287,8 +274,8 @@ public class CourseService {
         }
 
         removeMemberFromCourseDTO.getMemberIds().forEach(userId -> {
-            UserCourseEntity member = userCourseEntityRepository.findByUserIdAndCourseId(userId, courseId).orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "삭제할 코스 멤버 정보가 없습니다."));
-            userCourseEntityRepository.delete(member);
+            CourseMemberEntity member = courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId).orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "삭제할 코스 멤버 정보가 없습니다."));
+            courseMemberEntityRepository.delete(member);
         });
 
     }

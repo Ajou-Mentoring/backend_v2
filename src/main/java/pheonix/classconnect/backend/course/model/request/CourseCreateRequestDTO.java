@@ -23,6 +23,6 @@ public class CourseCreateRequestDTO {
     @NotNull(message = "과목이름을 입력해주세요.")
     private String name;
 
-    @NotNull(message = "교수 아이디를 입력해주세요.")
-    private Long professorId;
+    @NotNull(message = "교수 이름을 입력해주세요.")
+    private String professorName;
 }

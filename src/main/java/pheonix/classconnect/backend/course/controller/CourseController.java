@@ -16,14 +16,14 @@ import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.common.model.Response;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.course.constants.CourseRole;
-import pheonix.classconnect.backend.course.entity.UserCourseEntity;
+import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
 import pheonix.classconnect.backend.course.model.CourseDTO;
 import pheonix.classconnect.backend.course.model.request.CourseCreateRequestDTO;
 import pheonix.classconnect.backend.course.model.request.CourseFetchRequestDTO;
 import pheonix.classconnect.backend.course.model.response.CourseResponse;
 import pheonix.classconnect.backend.course.model.response.SemesterDetailsResponse;
 import pheonix.classconnect.backend.course.service.CourseService;
-import pheonix.classconnect.backend.course.service.UserCourseService;
+import pheonix.classconnect.backend.course.service.CourseMemberService;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 import pheonix.classconnect.backend.security.service.PrincipalDetailsService;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 public class CourseController {
 
     private final CourseService courseService;
-    private final UserCourseService userCourseService;
+    private final CourseMemberService courseMemberService;
     private final FileStorage fileStorage;
     private final PrincipalDetailsService principalDetailsService;
     private final Short domainType = AttachmentDomainType.COURSE;
@@ -50,7 +50,7 @@ public class CourseController {
      * @param courseCreateRequestDTO : Course 생성에 필요한 필드를 담은 객체
      * @param image : Course 대표 이미지
      * @param user : Course 생성하는 Principal 객체
-     * @return
+     * @return Response
      */
     @PostMapping(value = "/courses", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
     public Response<String> create(@RequestPart(value = "course") @Valid CourseCreateRequestDTO courseCreateRequestDTO,
@@ -69,7 +69,7 @@ public class CourseController {
                 .semester(courseCreateRequestDTO.getSemester())
                 .name(courseCreateRequestDTO.getName())
                 .code(courseCreateRequestDTO.getCourseCode())
-                .professorId(courseCreateRequestDTO.getProfessorId())
+                .professorName(courseCreateRequestDTO.getProfessorName())
                 .build();
 
         courseService.create(newCourse, image);
@@ -150,7 +150,7 @@ public class CourseController {
 
     /**
      * Course 조회 API (학생) -> student의 ID로 참여한 Course 리스트 조회
-     * @param CourseFetchRequestDTO req : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
+     * @param  req : Course 리스트 필터링을 위한 파라미터를 담은 객체 (year, semester)
      * @return
      */
     @GetMapping("/courses")
@@ -229,7 +229,7 @@ public class CourseController {
 
 //        Integer userId = PrincipalUtils.getUserId(user);
         //List<User> mentors = courseService.getMentorsInCourse(courseId);
-        List<UserDTO.User> mentors = userCourseService.findUsersByCourseIdAndRole(courseId, CourseRole.MENTOR);
+        List<UserDTO.User> mentors = courseMemberService.findUsersByCourseIdAndRole(courseId, CourseRole.MENTOR);
         return Response.ok(HttpStatus.OK, "수업 정보를 조회하였습니다.",mentors);
     }
 
@@ -259,7 +259,7 @@ public class CourseController {
 //        log.info("클래스 권한 조회 : {} in {}", userId, courseId);
 
         Short role;
-        UserCourseEntity member = userCourseService.findUserRoleInClass(Long.parseLong(user.getUsername()), courseId);
+        CourseMemberEntity member = courseMemberService.findUserRoleInClass(Long.parseLong(user.getUsername()), courseId);
 
         Map<String, Short> result = new HashMap();
         result.put("role", member.getRole());

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
-import pheonix.classconnect.backend.course.entity.UserCourseEntity;
+import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +24,7 @@ public class CourseDTO {
 
         private Short semester;
 
-        private ProfessorDTO.Professor professor;
+        private String professor;
 
         private List<UserDTO.User> members;
 
@@ -39,9 +39,9 @@ public class CourseDTO {
                     .courseCode(entity.getCode())
                     .year(entity.getYear())
                     .semester(entity.getSemester())
-                    .professor(entity.getProfessor() != null ? ProfessorDTO.Professor.fromEntity(entity.getProfessor()) : null)
-                    .members(entity.getStudents().stream()
-                            .map(UserCourseEntity::getUser)
+                    .professor(entity.getProfessor())
+                    .members(entity.getMembers().stream()
+                            .map(CourseMemberEntity::getUser)
                             .map(UserDTO.User::fromEntity).toList())
                     .createdAt(LocalDateTime.of(entity.getCreatedDate(), entity.getCreatedTime()))
                     .updatedAt(LocalDateTime.of(entity.getUpdatedDate(), entity.getUpdatedTime()))
@@ -56,7 +56,7 @@ public class CourseDTO {
         private Short semester;
         private String name;
         private String code;
-        private Long professorId;
+        private String professorName;
     }
 
     @Data

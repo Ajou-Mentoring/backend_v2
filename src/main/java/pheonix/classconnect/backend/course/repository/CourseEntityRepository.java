@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CourseEntityRepository extends JpaRepository<CourseEntity, Long> {
-    List<CourseEntity> findAllByProfessorIdAndYearAndSemester(Long professorId, String year, Short semester);
+//    List<CourseEntity> findAllByProfessorIdAndYearAndSemester(Long professorId, String year, Short semester);
 
-    @Query("SELECT distinct ce.year, ce.semester FROM Course ce WHERE ce.professor.id = :userId order by ce.year desc, ce.semester desc")
-    List<Object>  findDistinctSemestersByUserId(@Param("userId") Long userId);
+//    @Query("SELECT distinct ce.year, ce.semester FROM Course ce WHERE ce.professor.id = :userId order by ce.year desc, ce.semester desc")
+//    List<Object>  findDistinctSemestersByUserId(@Param("userId") Long userId);
 
     List<CourseEntity> findAllByYearAndSemester(String year, Short semester);
 
