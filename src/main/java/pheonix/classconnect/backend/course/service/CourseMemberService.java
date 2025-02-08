@@ -10,18 +10,15 @@ import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
 import pheonix.classconnect.backend.course.constants.CourseRole;
 import pheonix.classconnect.backend.course.constants.CourseStatus;
-import pheonix.classconnect.backend.course.constants.Semester;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
 import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
 import pheonix.classconnect.backend.course.entity.UserCourseId;
-import pheonix.classconnect.backend.course.model.request.RemoveMemberFromCourseDTO;
 import pheonix.classconnect.backend.course.model.request.UpdateMemberRoleDTO;
 import pheonix.classconnect.backend.course.repository.CourseEntityRepository;
 import pheonix.classconnect.backend.course.repository.CourseMemberEntityRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -122,6 +119,10 @@ public class CourseMemberService {
 
         if (courseMemberEntityRepository.findByUserIdAndCourseId(userId, course.getId()).isPresent()) {
             throw new MainApplicationException(ErrorCode.DUPLICATED_COURSE_MEMBER, String.format("이미 코스에 가입했습니다. [%d] -> [%d]", userId, course.getId()));
+        }
+
+        if (!Objects.equals(course.getStatus(), CourseStatus.OPEN)) {
+            throw new MainApplicationException(ErrorCode.COURSE_NOT_OPEN, "현재 코스 참가 가능한 상태가 아닙니다.");
         }
 
         CourseMemberEntity member = CourseMemberEntity.builder()

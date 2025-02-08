@@ -24,7 +24,8 @@ public enum ErrorCode {
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "COURSE001", "코스를 찾을 수 없습니다."),
     DUPLICATED_COURSE(HttpStatus.CONFLICT, "COURSE002", "중복된 코스입니다."),
     COURSE_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "COURSE003", "코스 멤버 정보가 없습니다."),
-    DUPLICATED_COURSE_MEMBER(HttpStatus.FORBIDDEN, "COURSE004", "코스 멤버 중복입니다.");
+    DUPLICATED_COURSE_MEMBER(HttpStatus.FORBIDDEN, "COURSE004", "코스 멤버 중복입니다."),
+    COURSE_NOT_OPEN(HttpStatus.BAD_REQUEST, "COURSE005" , "코스가 개설 상태가 아닙니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
