@@ -1,5 +1,6 @@
 package pheonix.classconnect.backend.course.repository;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,19 +20,19 @@ public interface CourseMemberEntityRepository extends JpaRepository<CourseMember
     @Query("SELECT DISTINCT uce.course.year, uce.course.semester FROM CourseMember uce WHERE uce.user.id = :userId order by uce.course.year desc, uce.course.semester desc")
     List<SemesterMapper> findDistinctSemestersByUserId(@Param("userId") Long userId);
 
-    List<CourseMemberEntity> findAllByCourseIdAndRole(Long courseId, Short role);
-
     boolean existsByUserIdAndRole(Long userId, Short role);
 
     Optional<CourseMemberEntity> findByUserIdAndCourseId(Long userId, Long courseId);
 
-    List<CourseMemberEntity> findByCourseIdAndRole(Long courseId, Short role);
+    List<CourseMemberEntity> findAllByCourseIdAndRole(Long courseId, Short role);
 
     @Modifying
     @Query("DELETE FROM CourseMember uc WHERE uc.course.id = :courseId AND uc.user.id IN :memberIds")
     void deleteMembersFromCourse(@Param("courseId") Long courseId, @Param("memberIds") List<Long> memberIds);
 
     List<CourseMemberEntity> findByUserIdOrderByCourseYearDescCourseSemesterDesc(@NotNull(message = "멤버 아이디를 입력해주세요.") Long memberId);
+
+    List<CourseMemberEntity> findAllByCourseId(@Valid Long courseId);
 
 
 //    @Query("SELECT DISTINCT uc.user FROM UserCourse uc " +

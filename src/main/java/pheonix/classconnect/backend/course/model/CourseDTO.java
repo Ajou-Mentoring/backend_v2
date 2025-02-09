@@ -69,4 +69,20 @@ public class CourseDTO {
         @NotNull(message = "멤버 아이디를 입력해주세요.")
         private Long memberId;
     }
+
+    @Data
+    @Builder
+    public static class Member {
+        private UserDTO.User user;
+        private Course course;
+        private Short courseRole;
+
+        public static Member fromEntity(CourseMemberEntity entity) {
+            return Member.builder()
+                    .user(UserDTO.User.fromEntity(entity.getUser()))
+                    .course(Course.fromEntity(entity.getCourse()))
+                    .courseRole(entity.getRole())
+                    .build();
+        }
+    }
 }
