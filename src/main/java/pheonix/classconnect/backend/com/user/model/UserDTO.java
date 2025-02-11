@@ -54,4 +54,24 @@ public class UserDTO {
         private Set<Short> authorities;
         private Short activeStatus;
     }
+
+    @Data
+    @Builder
+    public static class Response01 {
+        private Long id;
+        private String name;
+        private String email;
+        private String studentNo;
+        private Short courseRole;
+    }
+
+    @Data
+    @Builder
+    public static class Response02 {
+        private Long id;
+        private String name;
+        private String email;
+        private String studentNo;
+        private Short auth;
+    }
 }

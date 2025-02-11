@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
@@ -25,4 +26,6 @@ public class CourseCreateRequestDTO {
 
     @NotNull(message = "교수 이름을 입력해주세요.")
     private String professorName;
+
+    private MultipartFile image;
 }

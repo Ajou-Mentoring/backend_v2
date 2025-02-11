@@ -13,6 +13,7 @@ import pheonix.classconnect.backend.course.constants.CourseStatus;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
 import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
 import pheonix.classconnect.backend.course.entity.UserCourseId;
+import pheonix.classconnect.backend.course.model.CourseDTO;
 import pheonix.classconnect.backend.course.model.request.UpdateMemberRoleDTO;
 import pheonix.classconnect.backend.course.repository.CourseEntityRepository;
 import pheonix.classconnect.backend.course.repository.CourseMemberEntityRepository;
@@ -57,7 +58,7 @@ public class CourseMemberService {
     }
 
     public List<UserDTO.User> findUsersByCourseIdAndRole(Long courseId, Short role) {
-        List<CourseMemberEntity> members = courseMemberEntityRepository.findByCourseIdAndRole(courseId, role);
+        List<CourseMemberEntity> members = courseMemberEntityRepository.findAllByCourseIdAndRole(courseId, role);
         if (members.isEmpty())
             return new ArrayList<>();
         else {
@@ -103,7 +104,7 @@ public class CourseMemberService {
 
         // 2. courseId != 0 이면 해당 코스의 멘토 정보 조회
 
-        return courseMemberEntityRepository.findByCourseIdAndRole(courseId, CourseRole.MENTOR).stream()
+        return courseMemberEntityRepository.findAllByCourseIdAndRole(courseId, CourseRole.MENTOR).stream()
                 .map(CourseMemberEntity::getUser)
                 .map(UserDTO.User::fromEntity)
                 .toList();
@@ -133,6 +134,19 @@ public class CourseMemberService {
                 .build();
 
         courseMemberEntityRepository.save(member);
+    }
+
+    public List<CourseDTO.Member> findMembersInCourse(@Valid Long courseId) {
+        log.info("{} 코스 내 멤버 조회", courseId);
+
+        // 입력값 검증
+        courseEntityRepository.findById(courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, "코스를 찾을 수 없습니다."));
+
+        // 본처리
+        return courseMemberEntityRepository.findAllByCourseId(courseId).stream()
+                .map(CourseDTO.Member::fromEntity)
+                .toList();
     }
 
 

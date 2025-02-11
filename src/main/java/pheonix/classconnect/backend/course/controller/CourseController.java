@@ -49,13 +49,11 @@ public class CourseController {
     /**
      * Course 생성 API
      * @param request : Course 생성에 필요한 필드를 담은 객체
-     * @param image : Course 대표 이미지
      * @param user : Course 생성하는 Principal 객체
      * @return Response
      */
     @PostMapping(value = "/courses", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
-    public Response<String> create(@RequestPart(value = "course") @Valid CourseCreateRequestDTO request,
-                           @RequestPart(value = "image", required = false) MultipartFile image,
+    public Response<String> create(@ModelAttribute @Valid CourseCreateRequestDTO request,
                            @AuthenticationPrincipal User user
                            ) {
 
@@ -73,7 +71,7 @@ public class CourseController {
                 .professorName(request.getProfessorName())
                 .build();
 
-        courseService.create(newCourse, image);
+        courseService.create(newCourse, request.getImage());
 
         return Response.ok("수업을 등록하였습니다.");
     }
@@ -279,6 +277,32 @@ public class CourseController {
         return Response.ok(HttpStatus.OK, "멘토 정보를 조회하였습니다.", result);
     }
 
+    @GetMapping("/courses/{courseId}/members")
+    public Response<List<UserDTO.Response01>> getMembers(
+            @PathVariable(value = "courseId") Long courseId
+    ) {
+        log.info("CourseController.getMembers({})", courseId);
+
+        List<CourseDTO.Member> members = courseMemberService.findMembersInCourse(courseId);
+
+        List<UserDTO.Response01> result = new ArrayList<>();
+
+        if (members.isEmpty()) {
+            return Response.ok(HttpStatus.OK, "조회된 멤버가 없습니다.", result);
+        }
+
+        result = members.stream()
+                .map(member -> UserDTO.Response01.builder()
+                        .id(member.getUser().getId())
+                        .name(member.getUser().getName())
+                        .email(member.getUser().getEmail())
+                        .studentNo(member.getUser().getStudentNo())
+                        .courseRole(member.getCourseRole())
+                        .build())
+                .toList();
+        return Response.ok(HttpStatus.OK, "코스 멤버를 조회했습니다.", result);
+    }
+
     @PostMapping("/courses/join")
     public Response joinCourse(
             @RequestParam @Valid String memberCode,
@@ -291,6 +315,26 @@ public class CourseController {
 
         return Response.ok("코스에 참가했습니다.");
     }
+
+    @PutMapping("/courses/{courseId}")
+    public Response<String> updateCourse(@PathVariable(value = "courseId") Long courseId,
+                                         @RequestParam String field,
+                                         @RequestParam(required = false) String value,
+                                         @AuthenticationPrincipal User user) {
+        log.info("CourseController.updateCourse({}, {})", field, value);
+
+        // 입력값 검증
+        if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION);
+        }
+        // 참가 코드 변경 시
+        if (Objects.equals(field, "memberCode")) {
+            courseService.changeMemberCode(courseId);
+        }
+
+        return Response.ok("참가 코드가 변경되었습니다.");
+    }
+
 
 //    @GetMapping("/courses/{courseId}/participants")
 //    public ResponseWithResult<List<ParticipantDTO>> getStudentsParticipants(@PathVariable(value = "courseId") Integer courseId,

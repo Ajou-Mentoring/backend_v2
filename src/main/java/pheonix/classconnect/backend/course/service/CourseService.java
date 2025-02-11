@@ -169,7 +169,7 @@ public class CourseService {
         courseEntityRepository.findById(courseId)
                 .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, "코스를 찾을 수 없습니다."));
 
-        List<CourseMemberEntity> members = courseMemberEntityRepository.findByCourseIdAndRole(courseId, CourseRole.MENTOR);
+        List<CourseMemberEntity> members = courseMemberEntityRepository.findAllByCourseIdAndRole(courseId, CourseRole.MENTOR);
 
         if (members.isEmpty()) {
             return new ArrayList<>();
@@ -367,5 +367,16 @@ public class CourseService {
                 throw new MainApplicationException(ErrorCode.BAK_LOGIC_ERROR, "참여 코드 생성 횟수 제한을 초과했습니다.");
         }
 
+    }
+
+    public void changeMemberCode(Long courseId) {
+        log.info("참가코드 변경 {}", courseId);
+
+        CourseEntity course = courseEntityRepository.findById(courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND));
+
+        course.setMemberCode(this.generateMemberCode());
+
+        courseEntityRepository.save(course);
     }
 }
