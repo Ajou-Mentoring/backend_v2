@@ -49,13 +49,11 @@ public class CourseController {
     /**
      * Course 생성 API
      * @param request : Course 생성에 필요한 필드를 담은 객체
-     * @param image : Course 대표 이미지
      * @param user : Course 생성하는 Principal 객체
      * @return Response
      */
     @PostMapping(value = "/courses", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
-    public Response<String> create(@RequestPart(value = "course") @Valid CourseCreateRequestDTO request,
-                           @RequestPart(value = "image", required = false) MultipartFile image,
+    public Response<String> create(@ModelAttribute @Valid CourseCreateRequestDTO request,
                            @AuthenticationPrincipal User user
                            ) {
 
@@ -73,7 +71,7 @@ public class CourseController {
                 .professorName(request.getProfessorName())
                 .build();
 
-        courseService.create(newCourse, image);
+        courseService.create(newCourse, request.getImage());
 
         return Response.ok("수업을 등록하였습니다.");
     }
