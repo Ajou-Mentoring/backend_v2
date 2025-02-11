@@ -8,24 +8,28 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorCode {
     BAK_LOGIC_ERROR(                HttpStatus.FORBIDDEN,                   "BACK001",    "백엔드 로직 오류입니다."),
-    BAK_INVALID_PERMISSION(         HttpStatus.FORBIDDEN,                   "BACK002",   "요청 권한이 없습니다."),
+    BAK_INVALID_PERMISSION(         HttpStatus.UNAUTHORIZED,                   "BACK002",   "요청 권한이 없습니다."),
 
     SYS_INTERNAL_SERVER_ERROR(      HttpStatus.INTERNAL_SERVER_ERROR,       "SYS500",   "서버 오류입니다."),
     SYS_UNCAUGHT_ERROR(             HttpStatus.INTERNAL_SERVER_ERROR,       "SYS999",   "핸들링 되지 않은 오류입니다."),
 
-    DUPLICATED_USER(                HttpStatus.CONFLICT,                    "USER001" ,  "중복된 사용자입니다."),
+    DUPLICATED_USER(                HttpStatus.BAD_REQUEST,                    "USER001" ,  "중복된 사용자입니다."),
     USER_CREATE_FAILED(              HttpStatus.INTERNAL_SERVER_ERROR,      "USER002" , "유저 생성에 실패했습니다."),
     USER_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "USER003",      "유저를 찾을 수 없습니다."),
-
     AUTH_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "AUTH001",   "권한을 찾을 수 없습니다."),
 
     UNSUPPORTED_FILE(HttpStatus.BAD_REQUEST, "FILE001", "지원하지 않는 파일 구분입니다."),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE002","파일을 찾을 수 없습니다." ),
+
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "COURSE001", "코스를 찾을 수 없습니다."),
-    DUPLICATED_COURSE(HttpStatus.CONFLICT, "COURSE002", "중복된 코스입니다."),
+    DUPLICATED_COURSE(HttpStatus.BAD_REQUEST, "COURSE002", "중복된 코스입니다."),
     COURSE_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "COURSE003", "코스 멤버 정보가 없습니다."),
-    DUPLICATED_COURSE_MEMBER(HttpStatus.FORBIDDEN, "COURSE004", "코스 멤버 중복입니다."),
-    COURSE_NOT_OPEN(HttpStatus.BAD_REQUEST, "COURSE005", "코스가 개설 상태가 아닙니다.");
+    DUPLICATED_COURSE_MEMBER(HttpStatus.BAD_REQUEST, "COURSE004", "코스 멤버 중복입니다."),
+    COURSE_NOT_OPEN(HttpStatus.BAD_REQUEST, "COURSE005", "코스가 개설 상태가 아닙니다."),
+
+    POST_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "POST001", "지원하지 않는 파라미터입니다."),
+    POST_NOT_FOUND(HttpStatus.BAD_REQUEST, "POST002", "게시물을 찾을 수 없습니다."),
+    POST_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "POST003", "게시물 접근 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
