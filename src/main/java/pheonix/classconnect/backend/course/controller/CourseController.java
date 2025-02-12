@@ -316,12 +316,33 @@ public class CourseController {
         return Response.ok("코스에 참가했습니다.");
     }
 
-    @PutMapping("/courses/{courseId}")
-    public Response<String> updateCourse(@PathVariable(value = "courseId") Long courseId,
+    @GetMapping("/courses/{courseId}/details")
+    public Response<String> getCourseDetails(@PathVariable(value = "courseId") Long courseId,
                                          @RequestParam String field,
                                          @RequestParam(required = false) String value,
                                          @AuthenticationPrincipal User user) {
-        log.info("CourseController.updateCourse({}, {})", field, value);
+        log.info("CourseController.getCourseInfo({}, {})", field, value);
+
+        // 입력값 검증
+        if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION);
+        }
+
+        String res = null;
+        // 참가 코드 변경 시
+        if (Objects.equals(field, "memberCode")) {
+            res = courseService.getACourseById(courseId).getMemberCode();
+        }
+
+        return Response.ok(HttpStatus.OK, String.format("코스 정보를 조회했습니다. [%s]", field), res);
+    }
+
+    @PutMapping("/courses/{courseId}/details")
+    public Response<String> updateCourseDetails(@PathVariable(value = "courseId") Long courseId,
+                                         @RequestParam String field,
+                                         @RequestParam(required = false) String value,
+                                         @AuthenticationPrincipal User user) {
+        log.info("CourseController.updateCourseInfo({}, {})", field, value);
 
         // 입력값 검증
         if (!principalDetailsService.isAdmin(user)) {
