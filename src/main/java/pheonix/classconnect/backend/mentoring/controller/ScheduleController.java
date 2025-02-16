@@ -150,7 +150,7 @@ public class ScheduleController {
 
     // 개별 일정 조회
     @GetMapping("/users/{userId}/schedule/{year}/{month}/{day}")
-    public Response<List<ScheduleDTO.Response31>> getDailySchedule(@PathVariable(value = "userId") Long userId,
+    public Response<List<ScheduleDTO.Response32>> getDailySchedule(@PathVariable(value = "userId") Long userId,
                                                                    @PathVariable(value = "year") Integer year,
                                                                    @PathVariable(value = "month") Integer month,
                                                                    @PathVariable(value = "day") Integer day
@@ -167,8 +167,9 @@ public class ScheduleController {
         if (day == null)
             throw new MainApplicationException(ErrorCode.BACK_NONNULL_PARAMETER, "파라미터가 NULL입니다. [day]");
 
-        List<ScheduleDTO.Response31> res = scheduleService.getDailySchedule(userId, year, month, day).stream()
-                .map(schedule -> ScheduleDTO.Response31.builder()
+        List<ScheduleDTO.Response32> res = scheduleService.getDailySchedule(userId, year, month, day).stream()
+                .map(schedule -> ScheduleDTO.Response32.builder()
+                        .serNo(schedule.getSerNo())
                         .date(schedule.getDate())
                         .startTime(schedule.getStartTime())
                         .endTime(schedule.getEndTime())
