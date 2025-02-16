@@ -82,5 +82,15 @@ public class ScheduleDTO {
         private LocalTime endTime;
         private Short mentoringType;
     }
+
+    @Data
+    @Builder
+    public static class Response32 {
+        private Integer serNo;
+        private LocalDate date;
+        private LocalTime startTime;
+        private LocalTime endTime;
+        private Short mentoringType;
+    }
 }
 
