@@ -123,7 +123,7 @@ public class ScheduleController {
     }
 
     @GetMapping("/users/{userId}/schedule/{year}/{month}")
-    public Response<List<ScheduleDTO.Response31>> getMonthlySchedule(@PathVariable(value = "userId") Long userId,
+    public Response<List<ScheduleDTO.Response32>> getMonthlySchedule(@PathVariable(value = "userId") Long userId,
                                                                       @PathVariable(value = "year") Integer year,
                                                                       @PathVariable(value = "month") Integer month) {
         log.info("ScheduleController.getMonthlySchedule({})", userId);
@@ -136,8 +136,9 @@ public class ScheduleController {
         if (month == null)
             throw new MainApplicationException(ErrorCode.BACK_NONNULL_PARAMETER, "파라미터가 NULL입니다. [month]");
 
-        List<ScheduleDTO.Response31> res = scheduleService.getMonthlySchedule(userId, year, month).stream()
-                .map(schedule -> ScheduleDTO.Response31.builder()
+        List<ScheduleDTO.Response32> res = scheduleService.getMonthlySchedule(userId, year, month).stream()
+                .map(schedule -> ScheduleDTO.Response32.builder()
+                        .serNo(schedule.getSerNo())
                         .date(schedule.getDate())
                         .startTime(schedule.getStartTime())
                         .endTime(schedule.getEndTime())
