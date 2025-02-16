@@ -116,7 +116,7 @@ public class AuthController {
         /*검증*/
         // 요청자와 가입자가 동일한지 검사
         if (!signupDTO.getStudentCode().equals(user.getUsername()))
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, String.format("생성할 유저 정보와 요청자 정보가 다릅니다. => 가입자[%s] 요청자[%s]", signupDTO.getStudentCode(), user.getUsername()));
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, String.format("생성할 유저 정보와 요청자 정보가 다릅니다. => 가입자[%s] 요청자[%s]", signupDTO.getStudentCode(), user.getUsername()));
 
         /*본처리*/
         UserDTO.Create newUser = UserDTO.Create.builder()

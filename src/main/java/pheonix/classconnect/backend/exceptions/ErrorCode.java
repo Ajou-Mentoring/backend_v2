@@ -8,7 +8,8 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorCode {
     BAK_LOGIC_ERROR(                HttpStatus.FORBIDDEN,                   "BACK001",    "백엔드 로직 오류입니다."),
-    BAK_INVALID_PERMISSION(         HttpStatus.UNAUTHORIZED,                   "BACK002",   "요청 권한이 없습니다."),
+    BACK_INVALID_PERMISSION(         HttpStatus.UNAUTHORIZED,                   "BACK002",   "요청 권한이 없습니다."),
+    BACK_NONNULL_PARAMETER(         HttpStatus.BAD_REQUEST,                 "BACK003",      "파라미터가 Null입니다."),
 
     SYS_INTERNAL_SERVER_ERROR(      HttpStatus.INTERNAL_SERVER_ERROR,       "SYS500",   "서버 오류입니다."),
     SYS_UNCAUGHT_ERROR(             HttpStatus.INTERNAL_SERVER_ERROR,       "SYS999",   "핸들링 되지 않은 오류입니다."),
@@ -29,7 +30,12 @@ public enum ErrorCode {
 
     POST_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "POST001", "지원하지 않는 파라미터입니다."),
     POST_NOT_FOUND(HttpStatus.BAD_REQUEST, "POST002", "게시물을 찾을 수 없습니다."),
-    POST_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "POST003", "게시물 접근 권한이 없습니다.");
+    POST_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "POST003", "게시물 접근 권한이 없습니다."),
+    QNA_NOT_FOUND(HttpStatus.NOT_FOUND, "QNA001", "Q&A 게시물을 찾을 수 없습니다."),
+    QNA_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "QNA002", "Q&A 게시물 접근 권한이 없습니다."),
+
+    MENTOR_TIME_CONFLICT(HttpStatus.CONFLICT, "MENTOR409", "멘토링 스케줄 중복입니다."),
+    MENTOR_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "MENTOR001", "멘토링 접근 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
