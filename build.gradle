@@ -38,11 +38,15 @@ dependencies {
 
 	// JPA
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'io.hypersistence:hypersistence-utils-hibernate-60:3.3.1'
 	// MariaDB
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
 	// aws
 	implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.3.1'
+
+	// JSON
+	implementation 'com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations'
 
 	/* Security 설정 */
 	// Spring Security
