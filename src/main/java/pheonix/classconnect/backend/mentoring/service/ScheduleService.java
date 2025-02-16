@@ -190,7 +190,7 @@ public class ScheduleService {
 
     private boolean isDuplicated(ScheduleDTO.Schedule a, ScheduleDTO.Schedule b) {
         // 만약 날짜가 다르면 충돌 아님
-        if (!a.getDate().equals(b.getDate())) {
+        if (!a.getDate().isEqual(b.getDate())) {
             return false;
         }
 
