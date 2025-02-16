@@ -46,7 +46,7 @@ public class ScheduleService {
 
         int idxA = 0, idxB = 0;
         while (idxA < requestedSchedules.size() && idxB < savedSchedules.size()) {
-            ScheduleDTO.Schedule requested = requestedSchedules.get(idxB);
+            ScheduleDTO.Schedule requested = requestedSchedules.get(idxA);
             ScheduleDTO.Schedule saved = ScheduleDTO.Schedule.fromEntity(savedSchedules.get(idxB));
 
             // 충돌된 일정이 있다면 해당 스케줄을 충돌리스트에 추가한다.
@@ -190,6 +190,7 @@ public class ScheduleService {
 
     private boolean isDuplicated(ScheduleDTO.Schedule a, ScheduleDTO.Schedule b) {
         // 만약 날짜가 다르면 충돌 아님
+        log.info("a: {}, b: {}", a.getDate(), b.getDate());
         if (!a.getDate().isEqual(b.getDate())) {
             return false;
         }
