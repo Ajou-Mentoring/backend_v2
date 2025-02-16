@@ -16,8 +16,6 @@ import pheonix.classconnect.backend.com.user.repository.UserRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,7 +51,7 @@ public class PrincipalDetailsService implements UserDetailsService {
 
     public boolean isAdmin(User user) {
         if (user == null) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "요청에 저장된 권한 정보가 없습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "요청에 저장된 권한 정보가 없습니다.");
         }
         return user.getAuthorities().stream()
                 .anyMatch(auth -> auth != null && auth.getAuthority().equals("ROLE_ADMIN"));

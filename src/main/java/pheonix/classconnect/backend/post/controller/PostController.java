@@ -1,6 +1,5 @@
 package pheonix.classconnect.backend.post.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -8,7 +7,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
 import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
@@ -26,7 +24,6 @@ import pheonix.classconnect.backend.post.service.PostService;
 import pheonix.classconnect.backend.security.service.PrincipalDetailsService;
 
 import java.util.Collections;
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -44,7 +41,7 @@ public class PostController {
 
         // 요청 검증
         if (!principalDetailsService.isAdmin(user)) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "관리자만 공지사항을 게시할 수 있습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자만 공지사항을 게시할 수 있습니다.");
         }
 
         // 본처리
@@ -70,7 +67,7 @@ public class PostController {
 
         // 요청 검증
         if (!principalDetailsService.isAdmin(user)) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "관리자만 공지사항을 수정할 수 있습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자만 공지사항을 수정할 수 있습니다.");
         }
 
         // 본처리
@@ -105,7 +102,7 @@ public class PostController {
 
         // 요청 검증
         if (!principalDetailsService.isAdmin(user)) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "관리자만 공지사항을 삭제할 수 있습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자만 공지사항을 삭제할 수 있습니다.");
         }
 
         // 본처리

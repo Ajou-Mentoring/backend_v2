@@ -173,7 +173,7 @@ public class FileStorageImpl implements FileStorage {
         return true;
     }
 
-    public File mapAttachmentToItem(Long attachmentId, @NotNull Short domain, Long domainId) {
+    public File mapFileToDomain(Long attachmentId, @NotNull Short domain, Long domainId) {
         log.info("Attachment 매핑 : Attachment {} In {} To {}", attachmentId, domain, domainId);
 
         FileEntity file = attachmentEntityRepository.findById(attachmentId).orElseThrow(() -> new MainApplicationException(ErrorCode.FILE_NOT_FOUND, "File Not Found"));

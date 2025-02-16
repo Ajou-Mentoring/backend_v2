@@ -28,6 +28,8 @@ public class CourseDTO {
 
         private List<UserDTO.User> members;
 
+        private String memberCode;
+
         private LocalDateTime createdAt;
 
         private LocalDateTime updatedAt;
@@ -43,6 +45,7 @@ public class CourseDTO {
                     .members(entity.getMembers().stream()
                             .map(CourseMemberEntity::getUser)
                             .map(UserDTO.User::fromEntity).toList())
+                    .memberCode(entity.getMemberCode())
                     .createdAt(LocalDateTime.of(entity.getCreatedDate(), entity.getCreatedTime()))
                     .updatedAt(LocalDateTime.of(entity.getUpdatedDate(), entity.getUpdatedTime()))
                     .build();

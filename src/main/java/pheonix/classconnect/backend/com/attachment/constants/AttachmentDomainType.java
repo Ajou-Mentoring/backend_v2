@@ -6,5 +6,6 @@ public class AttachmentDomainType {
     public static Short COURSE = 3;
     public static Short MENTORING_REQUEST = 4;
     public static Short MENTORING_RESULT = 5;
-    public static Short QA = 5;
+    public static Short QUESTION = 11;
+    public static Short ANSWER = 12;
 }

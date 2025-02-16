@@ -2,8 +2,6 @@ package pheonix.classconnect.backend.com.attachment.service;
 
 import jakarta.validation.constraints.NotNull;
 import org.springframework.web.multipart.MultipartFile;
-import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
-import pheonix.classconnect.backend.com.attachment.constants.AttachmentFileType;
 import pheonix.classconnect.backend.com.attachment.entity.FileEntity;
 import pheonix.classconnect.backend.com.attachment.model.File;
 
@@ -22,5 +20,5 @@ public interface FileStorage {
     boolean isImage(@NotNull Short fileType);
     boolean isScript(@NotNull Short scriptType);
 
-    File mapAttachmentToItem(Long attachmentId, Short domain, Long domainId);
+    File mapFileToDomain(Long attachmentId, Short domain, Long domainId);
 }

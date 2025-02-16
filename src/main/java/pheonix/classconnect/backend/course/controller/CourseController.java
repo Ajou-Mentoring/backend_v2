@@ -8,7 +8,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
 import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
@@ -59,7 +58,7 @@ public class CourseController {
 
         // 요청 검증 - 관리자인지
         if (principalDetailsService.isAdmin(user)) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "관리자 권한이 없습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자 권한이 없습니다.");
         }
 
         // 입력값 조립
@@ -133,7 +132,7 @@ public class CourseController {
 
         // 요청 검증 - 관리자인지
         if (!principalDetailsService.isAdmin(user)) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "관리자 권한이 없습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자 권한이 없습니다.");
         }
 
         courseService.delete(courseId);
@@ -153,7 +152,7 @@ public class CourseController {
         try {
             studentId = Long.parseLong(user.getUsername());
         } catch (NumberFormatException e) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "사용자 아이디 정보가 없습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "사용자 아이디 정보가 없습니다.");
         }
 
 //        Integer userId = PrincipalUtils.getUserId(user);
@@ -200,7 +199,7 @@ public class CourseController {
         log.info("CourseController.getMentors()");
         // 요청 검증
         if (user == null) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "사용자 인증 정보가 없습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "사용자 인증 정보가 없습니다.");
         }
 
         // 본처리
@@ -309,23 +308,44 @@ public class CourseController {
             @AuthenticationPrincipal User user){
 
         if (user == null) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION, "사용자 정보가 없습니다.");
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "사용자 정보가 없습니다.");
         }
         courseMemberService.includeMemberToCourse(Long.parseLong(user.getUsername()), memberCode);
 
         return Response.ok("코스에 참가했습니다.");
     }
 
-    @PutMapping("/courses/{courseId}")
-    public Response<String> updateCourse(@PathVariable(value = "courseId") Long courseId,
+    @GetMapping("/courses/{courseId}/details")
+    public Response<String> getCourseDetails(@PathVariable(value = "courseId") Long courseId,
                                          @RequestParam String field,
                                          @RequestParam(required = false) String value,
                                          @AuthenticationPrincipal User user) {
-        log.info("CourseController.updateCourse({}, {})", field, value);
+        log.info("CourseController.getCourseInfo({}, {})", field, value);
 
         // 입력값 검증
         if (!principalDetailsService.isAdmin(user)) {
-            throw new MainApplicationException(ErrorCode.BAK_INVALID_PERMISSION);
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION);
+        }
+
+        String res = null;
+        // 참가 코드 변경 시
+        if (Objects.equals(field, "memberCode")) {
+            res = courseService.getACourseById(courseId).getMemberCode();
+        }
+
+        return Response.ok(HttpStatus.OK, String.format("코스 정보를 조회했습니다. [%s]", field), res);
+    }
+
+    @PutMapping("/courses/{courseId}/details")
+    public Response<String> updateCourseDetails(@PathVariable(value = "courseId") Long courseId,
+                                         @RequestParam String field,
+                                         @RequestParam(required = false) String value,
+                                         @AuthenticationPrincipal User user) {
+        log.info("CourseController.updateCourseInfo({}, {})", field, value);
+
+        // 입력값 검증
+        if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION);
         }
         // 참가 코드 변경 시
         if (Objects.equals(field, "memberCode")) {
