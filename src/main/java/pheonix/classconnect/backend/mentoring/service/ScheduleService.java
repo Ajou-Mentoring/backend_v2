@@ -44,22 +44,33 @@ public class ScheduleService {
         // 스케줄 객체 구축
         List<ScheduleDTO.Schedule> requestedSchedules = generateSchedule(timeTable);
 
-        int idxA = 0, idxB = 0;
-        while (idxA < requestedSchedules.size() && idxB < savedSchedules.size()) {
-            ScheduleDTO.Schedule requested = requestedSchedules.get(idxA);
-            ScheduleDTO.Schedule saved = ScheduleDTO.Schedule.fromEntity(savedSchedules.get(idxB));
+        for (ScheduleDTO.Schedule requestedSchedule : requestedSchedules) {
+            for (ScheduleEntity savedSchedule : savedSchedules) {
+                ScheduleDTO.Schedule requested = requestedSchedule;
+                ScheduleDTO.Schedule saved = ScheduleDTO.Schedule.fromEntity(savedSchedule);
 
-            // 충돌된 일정이 있다면 해당 스케줄을 충돌리스트에 추가한다.
-            if (isDuplicated(requested, saved)) {
-                duplicated.add(saved);
-            }
-
-            if (requested.getStartTime().isBefore(saved.getStartTime())) {
-                idxA++;
-            } else {
-                idxB++;
+                // 충돌된 일정이 있다면 해당 스케줄을 충돌리스트에 추가한다.
+                if (isDuplicated(requested, saved)) {
+                    duplicated.add(saved);
+                    break;
+                }
             }
         }
+//        while (idxA < requestedSchedules.size() && idxB < savedSchedules.size()) {
+//            ScheduleDTO.Schedule requested = requestedSchedules.get(idxA);
+//            ScheduleDTO.Schedule saved = ScheduleDTO.Schedule.fromEntity(savedSchedules.get(idxB));
+//
+//            // 충돌된 일정이 있다면 해당 스케줄을 충돌리스트에 추가한다.
+//            if (isDuplicated(requested, saved)) {
+//                duplicated.add(saved);
+//            }
+//
+//            if (requested.getStartTime().isBefore(saved.getStartTime())) {
+//                idxA++;
+//            } else {
+//                idxB++;
+//            }
+//        }
 
         return duplicated;
     }
