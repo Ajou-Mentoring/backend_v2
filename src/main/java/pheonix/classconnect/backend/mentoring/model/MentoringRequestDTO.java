@@ -122,7 +122,7 @@ public class MentoringRequestDTO {
     @Data
     @Builder
     public static class Request02 {
-        @NotNull(message = "승인/반려/취소 사유가 비어있습니다.")
+        @NotNull(message = "신청 내용이 비어있습니다.")
         private String content;
         @NotNull(message = "멘티 정보가 비어있습니다.")
         private List<Mentee> mentees;
@@ -136,11 +136,10 @@ public class MentoringRequestDTO {
     @Data
     @Builder
     public static class Request03 {
+        @NotNull(message = "승인/반려/취소 사유가 비어있습니다.")
         private String comment;
-        private Map<String, String> mentees;
-        private Short site;
-        private List<Long> images;
-        private List<Long> files;
+        @NotNull(message = "처리 구분 값이 비어있습니다.")
+        private Short action;
     }
 
     // 상세 응답
@@ -152,7 +151,7 @@ public class MentoringRequestDTO {
         private UserDTO.Response01 mentor;
         private LocalTime startTime;
         private LocalTime endTime;
-        private Short site;
+        private Short mentoringType;
         private String content;
         private List<Mentee> mentees;
         private boolean isRegistered;

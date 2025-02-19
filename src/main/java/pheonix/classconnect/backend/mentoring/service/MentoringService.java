@@ -62,6 +62,10 @@ public class MentoringService {
         CourseEntity course = courseEntityRepository.findById(dto.getCourseId())
                 .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, String.format("코스 정보를 찾을 수 없습니다. [%d]", dto.getCourseId())));
 
+        if (dto.getMentees().isEmpty() || !dto.getMentees().containsKey(requester.getStudentNo())) {
+            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "요청자 학번은 필수 값입니다. => 멘티 리스트를 확인하세요.");
+        }
+
         // 멘토와 요청자 모두 코스에 속해있는지 검증
         if (!courseMemberEntityRepository.existsByUserIdAndRole(dto.getMentorId(), CourseRole.MENTOR)) {
             throw new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, String.format("코스에서 해당 멘토를 찾을 수 없습니다. [%d]", dto.getMentorId()));
@@ -161,8 +165,8 @@ public class MentoringService {
         LocalTime endTime = request.getEndTime();
 
         boolean conflict = mentoringRequestRepository.findAllByUserAndDateAndStatusIn(mentorId, date, List.of(MentoringStatus.승인대기, MentoringStatus.승인)).stream()
-                .anyMatch(req -> !((endTime.isBefore(request.getStartTime()) || endTime.equals(request.getStartTime())) &&
-                        (startTime.isAfter(request.getEndTime()) || startTime.equals(request.getEndTime()))));
+                .anyMatch(req -> ((endTime.isBefore(req.getStartTime()) || endTime.equals(req.getStartTime())) &&
+                        (startTime.isAfter(req.getEndTime()) || startTime.equals(req.getEndTime()))));
 
         if (conflict) {
             throw new MainApplicationException(ErrorCode.MENTOR_TIME_CONFLICT, "이미 다른 요청이 승인/대기 중입니다.");
@@ -210,12 +214,12 @@ public class MentoringService {
             throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_PARAMETER_NULL, "멘토링 취소 사유는 필수 값입니다.");
         }
         // 3. 멘토링 요청 상태 검증
-        if (List.of(MentoringStatus.승인대기, MentoringStatus.승인).contains(request.getStatus())) {
+        if (!List.of(MentoringStatus.승인대기, MentoringStatus.승인).contains(request.getStatus())) {
             throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인 대기 또는 승인 상태인 요청만 거절할 수 있습니다.");
         }
         // 4. 멘토링 요청 거절 가능 기간인지 조회
         if (Objects.equals(request.getStatus(), MentoringStatus.승인) && LocalDate.now().isAfter(request.getDate().minusDays(2))) {
-            throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 최소 2일 이전까지 취소 가능합니다.");
+            throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 최소 2일 전까지 취소 가능합니다.");
         }
 
         request.cancel(comment);
@@ -337,7 +341,7 @@ public class MentoringService {
         else if (dto.getContent().length() > 200) {
             throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "멘토링 요청 내용은 최대 100자까지 작성 가능 합니다.");
         }
-        if (dto.getMentees().isEmpty() || !dto.getMentees().containsKey(request.getMentor().getStudentNo())) {
+        if (dto.getMentees().isEmpty() || !dto.getMentees().containsKey(request.getRequester().getStudentNo())) {
             throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "요청자 학번은 필수 값입니다. => 멘티 리스트를 확인하세요.");
         }
         if (dto.getSite() == null) {
