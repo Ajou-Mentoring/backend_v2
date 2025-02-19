@@ -19,6 +19,8 @@ public interface FileStorage {
     List<File> getAttachmentList(Short domain, Long domainId);
     boolean isImage(@NotNull Short fileType);
     boolean isScript(@NotNull Short scriptType);
+    void changeImages(Short domainType, Long domainId, List<Long> updated);
+    void changeFiles(Short domainType, Long domainId, List<Long> updated);
 
     File mapFileToDomain(Long attachmentId, Short domain, Long domainId);
 }

@@ -36,15 +36,18 @@ public class CourseMemberService {
             return courseMemberEntityRepository.existsByUserIdAndRole(userId, CourseRole.MENTOR);
     }
 
-//    public boolean isUserInCourse(UserEntity user, CourseEntity course) {
-//        // 교수일 경우
-////        if (course.getProfessor().equals(user))
-////            return true;
-//        return  userCourseEntityRepository.findByUserIdAndCourseId(user.getId(), )
-////        return user.getCourses().stream()
-////                .map(UserCourseEntity::getCourse)
-////                .anyMatch(c -> c != null && c.getId().equals(course.getId()));
-//    }
+    public boolean isCourseMember(Long courseId, Long userId) {
+        log.info("코스 멤버 여부 체크");
+        // 코스가 존재하지 않을 경우
+        courseEntityRepository.findById(courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, String.format("코스 정보가 없습니다. [%d]", courseId)));
+
+        // 유저가 존재하지 않을 경우
+        userRepository.findById(userId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, String.format("유저 정보가 없습니다. [%d]", userId)));
+
+        return courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId).isPresent();
+    }
 
     public CourseMemberEntity findUserRoleInClass(Long userId, Long courseId){
         return courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId).orElseThrow(() ->

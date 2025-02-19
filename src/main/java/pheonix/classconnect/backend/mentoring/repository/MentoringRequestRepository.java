@@ -11,4 +11,11 @@ import java.util.List;
 public interface MentoringRequestRepository extends JpaRepository<MentoringRequestEntity, Long> {
     @Query(value = "SELECT * FROM MentoringRequest WHERE mentor_id = :userId AND date = :date AND status IN :statusList", nativeQuery = true)
     List<MentoringRequestEntity> findAllByUserAndDateAndStatusIn(@Param("userId") Long userId, @Param("date") LocalDate date, @Param("statusList") List<Short> statusList);
+
+    List<MentoringRequestEntity> findAllByMentorIdAndCourseIdAndDateBetween(Long mentorId, Long courseId, LocalDate start, LocalDate end);
+
+    List<MentoringRequestEntity> findAllByRequesterIdAndCourseIdAndDateBetween(Long requesterId, Long courseId, LocalDate start, LocalDate end);
+
+    // 월별 멘티 신청 내역 조회
+    //List<MentoringRequestEntity> findAllByCourseIdAndMenteeByMonth()
 }

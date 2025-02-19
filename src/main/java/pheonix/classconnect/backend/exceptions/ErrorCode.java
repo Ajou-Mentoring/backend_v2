@@ -35,7 +35,13 @@ public enum ErrorCode {
     QNA_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "QNA002", "Q&A 게시물 접근 권한이 없습니다."),
 
     MENTOR_TIME_CONFLICT(HttpStatus.CONFLICT, "MENTOR409", "멘토링 스케줄 중복입니다."),
-    MENTOR_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "MENTOR001", "멘토링 접근 권한이 없습니다.");
+    MENTOR_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "MENTOR001", "멘토링 접근 권한이 없습니다."),
+    MENTORING_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR002", "멘토링 요청 정보를 찾을 수 없습니다."),
+    MENTORING_INVALID_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "MENTOR003", "멘토링 상태 변경 오류입니다."),
+    MENTORING_REQUEST_PARAMETER_NULL(HttpStatus.BAD_REQUEST, "MENTOR004", "멘토링 필수 파라미터 누락입니다."), 
+    MENTORING_REQUEST_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "MENTOR005", "멘토링 파라미터 오류입니다."),
+    MENTORING_REQUEST_FORBIDDEN_REQUEST(HttpStatus.FORBIDDEN, "MENTOR006", "지원하지 않는 멘토링 요청입니다."),
+    MENTORING_REQUEST_ERROR(HttpStatus.BAD_REQUEST, "MENTOR007", "멘토링 신청 오류입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
