@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
 import pheonix.classconnect.backend.com.attachment.constants.AttachmentFileType;
 import pheonix.classconnect.backend.com.attachment.constants.AttachmentUploadState;
 import pheonix.classconnect.backend.com.attachment.entity.FileEntity;
@@ -173,11 +175,82 @@ public class FileStorageImpl implements FileStorage {
         return true;
     }
 
+    @Override
+    @Transactional
+    public void changeImages(Short domainType, Long domainId, List<Long> updated) {
+        log.info("이미지 리스트 변경 : {} {} -> {}", domainType, domainId, updated.toString());
+
+        // 변경된 이미지 리스트에 포함되지 않는 파일은 삭제한다.
+        List<Long> saved = getAttachmentList(AttachmentDomainType.MENTORING_REQUEST, domainId).stream()
+                .filter(file -> isImage(file.getType()))
+                .map(File::getId).toList();
+
+        if (!saved.isEmpty()) {
+            for (Long fileId : saved) {
+                if (!updated.contains(fileId)) {
+                    deleteByFileId(fileId);
+                }
+            }
+        }
+
+        // 기존 파일 리스트에 저장되지 않았던 파일은 추가한다.
+        if (!updated.isEmpty()) {
+            for (Long fileId : updated) {
+                if (!saved.contains(fileId)) {
+                    // 저장된 파일인지 확인
+                    FileEntity file = attachmentEntityRepository.findById(fileId).orElse(null);
+
+                    if (file == null) {
+                        log.error("저장된 파일을 찾을 수 없습니다. {}", fileId);
+                        continue;
+                    }
+                    mapFileToDomain(fileId, AttachmentDomainType.MENTORING_REQUEST, domainId);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void changeFiles(Short domainType, Long domainId, List<Long> updated) {
+        log.info("첨부파일 리스트 변경 : {} {} -> {}", domainType, domainId, updated.toString());
+
+        // 변경된 첨부파일 리스트에 포함되지 않는 파일은 삭제한다.
+        List<Long> saved = getAttachmentList(AttachmentDomainType.MENTORING_REQUEST, domainId).stream()
+                .filter(file -> isScript(file.getType()))
+                .map(File::getId).toList();
+
+        if (!saved.isEmpty()) {
+            for (Long fileId : saved) {
+                if (!updated.contains(fileId)) {
+                    deleteByFileId(fileId);
+                }
+            }
+        }
+
+        // 기존 파일 리스트에 저장되지 않았던 파일은 추가한다.
+        if (!updated.isEmpty()) {
+            for (Long fileId : updated) {
+                if (!saved.contains(fileId)) {
+                    FileEntity file = attachmentEntityRepository.findById(fileId).orElse(null);
+
+                    if (file == null) {
+                        log.error("저장된 파일을 찾을 수 없습니다. {}", fileId);
+                        continue;
+                    }
+
+                    mapFileToDomain(fileId, AttachmentDomainType.MENTORING_REQUEST, domainId);
+                }
+            }
+        }
+    }
+
     public File mapFileToDomain(Long attachmentId, @NotNull Short domain, Long domainId) {
         log.info("Attachment 매핑 : Attachment {} In {} To {}", attachmentId, domain, domainId);
 
         FileEntity file = attachmentEntityRepository.findById(attachmentId).orElseThrow(() -> new MainApplicationException(ErrorCode.FILE_NOT_FOUND, "File Not Found"));
         file.addDomainInfo(domain, domainId);
+
+        attachmentEntityRepository.save(file);
 
         return File.fromEntity(file);
     }

@@ -1,6 +1,5 @@
 package pheonix.classconnect.backend.mentoring.entity;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,6 +12,7 @@ import org.hibernate.annotations.Type;
 import pheonix.classconnect.backend.com.common.entity.BaseTimeEntity;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
+import pheonix.classconnect.backend.mentoring.contants.MentoringStatus;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -50,10 +50,13 @@ public class MentoringRequestEntity extends BaseTimeEntity {
     @Column(name = "status")
     private Short status;
 
-    @Column(name = "content")
+    @Column(name = "site")
+    private Short site;
+
+    @Column(name = "content", length = 200)
     private String content;
 
-    @Column(name = "comment")
+    @Column(name = "comment", length = 200)
     private String comment;
 
     @ManyToOne
@@ -61,8 +64,35 @@ public class MentoringRequestEntity extends BaseTimeEntity {
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private CourseEntity course;
 
+    @Column(name = "isRegistered")
+    private boolean registered;
+
     @Type(JsonType.class)
     @Column(name = "mentees", columnDefinition = "longtext")
     private Map<String, Object> mentees;
 
+    public void accept(String comment) {
+        this.status = MentoringStatus.승인;
+        this.comment = comment;
+    }
+
+    public void reject(String comment) {
+        this.status = MentoringStatus.반려;
+        this.comment = comment;
+    }
+
+    public void cancel(String comment) {
+        this.status = MentoringStatus.취소;
+        this.comment = comment;
+    }
+
+    public void setRegistered() {
+        this.registered = true;
+    }
+
+    public void updateRequest(String content, Map<String, Object> mentees, Short site) {
+        this.content = content;
+        this.mentees = mentees;
+        this.site = site;
+    }
 }

@@ -74,4 +74,11 @@ public class UserDTO {
         private String studentNo;
         private Short auth;
     }
+
+    @Data
+    @Builder
+    public static class Response03 {
+        private String name;
+        private String studentNo;
+    }
 }
