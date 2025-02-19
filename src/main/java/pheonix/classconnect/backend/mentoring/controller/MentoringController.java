@@ -127,7 +127,7 @@ public class MentoringController {
                         .date(request.getDate())
                         .startTime(request.getStartTime())
                         .endTime(request.getEndTime())
-                        .site(request.getSite())
+                        .mentoringType(request.getSite())
                         .content(request.getContent())
                         .mentees(request.getMentees().entrySet().stream()
                                 .map(mentee -> MentoringRequestDTO.Mentee.builder()
@@ -178,7 +178,7 @@ public class MentoringController {
                 .date(request.getDate())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
-                .site(request.getSite())
+                .mentoringType(request.getSite())
                 .mentees(request.getMentees().entrySet().stream()
                         .map(mentee -> MentoringRequestDTO.Mentee.builder()
                                 .studentNo(mentee.getKey())
@@ -197,6 +197,7 @@ public class MentoringController {
         return Response.ok(HttpStatus.OK, "멘토링 요청을 조회했습니다.", res);
     }
 
+    // 멘토링 수정
     @PutMapping("/courses/{courseId}/requests/{requestId}")
     public Response updateMentoringRequest(@PathVariable(value = "courseId") Long courseId,
                                                                             @PathVariable(value = "requestId") Long requestId,
@@ -240,5 +241,55 @@ public class MentoringController {
         mentoringService.updateRequest(requestId, dto);
 
         return Response.ok(HttpStatus.ACCEPTED, "멘토링 요청이 수정되었습니다.", null);
+    }
+
+    @PatchMapping("/courses/{courseId}/requests/{requestId}")
+    public Response processRequest(@PathVariable(value = "courseId") Long courseId,
+                                   @PathVariable(value = "requestId") Long requestId,
+                                   @RequestBody MentoringRequestDTO.Request03 req,
+                                   @AuthenticationPrincipal User user) {
+        
+        log.info("MentoringController.processRequest({} {})", courseId, requestId);
+        
+        // 입력 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "권한 정보가 없습니다.");
+        }
+        
+        // action : 1-승인 2-반려 3-취소
+        if (req.getAction() == 1) {
+            // 멘토링 승인은 멘토만 가능
+            MentoringRequestDTO.MentoringRequest request = mentoringService.getMentoringRequest(requestId);
+            if (Long.parseLong(user.getUsername()) != request.getMentor().getId()) {
+                throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_FORBIDDEN_REQUEST, "승인/반려 권한이 없습니다.");
+            }
+            mentoringService.acceptRequest(requestId, req.getComment());
+
+            return Response.ok(HttpStatus.ACCEPTED, "멘토링 신청을 승인하였습니다.", null);
+        }
+        else if (req.getAction() == 2) {
+            // 멘토링 반려는 멘토만 가능
+            MentoringRequestDTO.MentoringRequest request = mentoringService.getMentoringRequest(requestId);
+            if (Long.parseLong(user.getUsername()) != request.getMentor().getId()) {
+                throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_FORBIDDEN_REQUEST, "승인/반려 권한이 없습니다.");
+            }
+            mentoringService.rejectRequest(requestId, req.getComment());
+
+            return Response.ok(HttpStatus.ACCEPTED, "멘토링 신청을 반려하였습니다.", null);
+        }
+        else if (req.getAction() == 3) {
+            // 멘토링 취소는 신청자만 가능
+            MentoringRequestDTO.MentoringRequest request = mentoringService.getMentoringRequest(requestId);
+            if (Long.parseLong(user.getUsername()) != request.getRequester().getId()) {
+                throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_FORBIDDEN_REQUEST, "취소 권한이 없습니다.");
+            }
+            mentoringService.cancelRequest(requestId, req.getComment());
+
+            return Response.ok(HttpStatus.ACCEPTED, "멘토링 신청을 취소하였습니다.", null);
+        }
+
+        throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, String.format("지원하지 않는 처리 구분입니다. [%d]", req.getAction()));
+
+
     }
 }
