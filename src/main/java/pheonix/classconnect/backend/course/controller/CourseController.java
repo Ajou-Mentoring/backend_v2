@@ -205,7 +205,7 @@ public class CourseController {
         // 본처리
         List<MentorResponse> result = new ArrayList<>();
         // 1. courseId == 0 이면 현재 연도/학기 기준 참여한 모든 클래스의 멘토 정보 가져오기
-        if (courseId == 0) {
+        if (courseId == 0L) {
             /*현재 날짜*/
             LocalDate now = LocalDate.now();
             /*현재 연도*/

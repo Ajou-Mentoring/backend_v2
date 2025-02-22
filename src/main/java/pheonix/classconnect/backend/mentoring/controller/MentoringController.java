@@ -10,6 +10,7 @@ import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
 import pheonix.classconnect.backend.com.common.model.Response;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.course.constants.CourseRole;
+import pheonix.classconnect.backend.course.model.CourseDTO;
 import pheonix.classconnect.backend.course.service.CourseMemberService;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
@@ -19,9 +20,7 @@ import pheonix.classconnect.backend.mentoring.service.MentoringService;
 import pheonix.classconnect.backend.security.service.PrincipalDetailsService;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -204,7 +203,7 @@ public class MentoringController {
                                                                             @PathVariable(value = "requestId") Long requestId,
                                                                             @RequestBody MentoringRequestDTO.Request02 req,
                                                                             @AuthenticationPrincipal User user) {
-        log.info("MentoringController.processMentoringRequest({} {})", courseId, requestId);
+        log.info("MentoringController.updateMentoringRequest({} {})", courseId, requestId);
 
         // 입력값 검증
         if (user == null) {
@@ -297,13 +296,20 @@ public class MentoringController {
     @GetMapping("/courses/{courseId}/members/{memberId}/stats")
     public Response<List<UserDTO.Response04>> getMembersStats(@PathVariable(value = "courseId") Long courseId,
                                                               @PathVariable(value = "memberId") Long memberId,
-                                                              @RequestParam(value = "year") int year,
-                                                              @RequestParam(value = "month") int month,
+                                                              @RequestParam(value = "year", defaultValue = "0") int year,
+                                                              @RequestParam(value = "month", defaultValue = "0") int month,
                                                               @RequestParam(value = "groupBy") String groupBy,
                                                               @AuthenticationPrincipal User user)
     {
         log.info("CourseController.getMemberStats({}, {}, {}, {}, {})", courseId, memberId, year, month, groupBy);
 
+        // 요청 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "사용자 권한 정보가 없습니다.");
+        }
+        else if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "통계 자료는 관리자만 접근 가능합니다.");
+        }
         if (courseId == null) {
             throw new MainApplicationException(ErrorCode.COURSE_INVALID_PARAMETER, "코스 ID는 필수 값입니다.");
         }
@@ -320,10 +326,45 @@ public class MentoringController {
             throw new MainApplicationException(ErrorCode.COURSE_INVALID_PARAMETER, "통계 기준(groupBy)은 필수 값입니다.");
         }
 
-        // 멘토링 현황 조회 (승인 건만)
-        //mentoringService.
+        List<UserDTO.Response04> res = new ArrayList<>();
 
-        return null;
+        // 1. 멘토링 신청 현황(통계) 조회
+        if (groupBy.equalsIgnoreCase("REQUEST")) {
+            // memberId == 0 일 경우 전체 조회
+            if (memberId == 0L) {
+                // 멘토링 현황 조회 (승인 건만)
+                List<CourseDTO.Member> members = courseMemberService.findMembersInCourse(courseId);
+
+                for (CourseDTO.Member member : members) {
+                    // 멘티가 아니라면 skip
+                    if (!Objects.equals(member.getCourseRole(), CourseRole.MENTEE))
+                        continue;
+                    int count = 0;
+                    try {
+                        count = mentoringService.getMentoringCount(null, member.getUser().getId(), courseId, year, month);
+                    } catch (MainApplicationException e) {
+                        // 서비스에 가입한 멘티가 아닌 경우 출력에서 제외
+                        if (e.getErrorCode().equals(ErrorCode.MENTEE_NOT_FOUND))
+                            continue;
+                    }
+                    // 멘토링 횟수가 0이라면 skip
+                    if (count == 0)
+                        continue;
+
+                    res.add(UserDTO.Response04.builder()
+                            .id(member.getUser().getId())
+                            .email(member.getUser().getEmail())
+                            .name(member.getUser().getName())
+                            .studentNo(member.getUser().getStudentNo())
+                            .courseRole(member.getCourseRole())
+                            .count(count)
+                            .build());
+                }
+            }
+        }
+
+
+        return Response.ok(HttpStatus.OK, String.format("%d년 %d월 멘토링 진행 현황을 조회했습니다.", year, month), res);
     }
 
 

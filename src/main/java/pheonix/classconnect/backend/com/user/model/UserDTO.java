@@ -96,4 +96,15 @@ public class UserDTO {
         private String name;
         private String studentNo;
     }
+
+    @Data
+    @Builder
+    public static class Response04 {
+        private Long id;
+        private String name;
+        private String email;
+        private String studentNo;
+        private Short courseRole;
+        private Integer count;
+    }
 }
