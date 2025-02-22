@@ -71,7 +71,7 @@ public class ScheduleDTO {
     public static class Response01 {
         private LocalTime startTime;
         private LocalTime endTime;
-        private Short site;
+        private Short mentoringType;
     }
 
     @Data
