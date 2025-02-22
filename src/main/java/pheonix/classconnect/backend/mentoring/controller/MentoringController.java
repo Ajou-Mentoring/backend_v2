@@ -83,7 +83,7 @@ public class MentoringController {
                 .courseId(courseId)
                 .startTime(req.getStartTime())
                 .endTime(req.getEndTime())
-                .site(req.getSite())
+                .site(req.getMentoringType())
                 .content(req.getContent())
                 .mentees(mentees)
                 .images(req.getImages())
@@ -233,7 +233,7 @@ public class MentoringController {
         MentoringRequestDTO.Update dto = MentoringRequestDTO.Update.builder()
                 .mentees(mentees)
                 .content(req.getContent())
-                .site(req.getSite())
+                .site(req.getMentoringType())
                 .images(req.getImages())
                 .files(req.getFiles())
                 .build();
