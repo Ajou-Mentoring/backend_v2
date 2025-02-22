@@ -416,8 +416,8 @@ public class MentoringService {
         if (dto.getContent().isEmpty() || dto.getContent().isBlank()) {
             throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "멘토링 요청 내용이 비어있습니다.");
         }
-        else if (dto.getContent().length() > 200) {
-            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "멘토링 요청 내용은 최대 100자까지 작성 가능 합니다.");
+        else if (dto.getContent().length() > 600) {
+            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "멘토링 요청 내용은 한글 기준 최대 300자까지 작성 가능 합니다.");
         }
         if (dto.getMentees().isEmpty() || !dto.getMentees().containsKey(request.getRequester().getStudentNo())) {
             throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "요청자 학번은 필수 값입니다. => 멘티 리스트를 확인하세요.");
@@ -466,7 +466,7 @@ public class MentoringService {
 
         // TimeSlot 생성
         for (ScheduleEntity s : schedules) {
-            log.info("{} {} {}", s.getStartTime(), s.getEndTime(), s.getId().getDate(), s.getId().getSerNo());
+            log.info("{} {} {} {}", s.getStartTime(), s.getEndTime(), s.getId().getDate(), s.getId().getSerNo());
         }
         List<ScheduleDTO.Schedule> timeSlots = generateTimeSlots(schedules);
 
@@ -489,6 +489,9 @@ public class MentoringService {
             LocalTime slotStart = current.getStartTime().withMinute(0).withSecond(0).withNano(0);
             if (current.getStartTime().getMinute() % 15 != 0) {
                 slotStart = slotStart.plusMinutes(((current.getStartTime().getMinute() / 15) + 1) * 15);
+            }
+            else {
+                slotStart = slotStart.plusMinutes(current.getStartTime().getMinute());
             }
             LocalTime slotEnd = slotStart.plusMinutes(30);
 
