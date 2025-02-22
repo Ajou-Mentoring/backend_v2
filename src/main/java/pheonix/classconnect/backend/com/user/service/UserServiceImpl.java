@@ -3,6 +3,10 @@ package pheonix.classconnect.backend.com.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
+import pheonix.classconnect.backend.com.attachment.entity.FileEntity;
+import pheonix.classconnect.backend.com.attachment.model.File;
+import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.auth.constant.AuthorityCode;
 import pheonix.classconnect.backend.com.auth.entity.AuthorityEntity;
 import pheonix.classconnect.backend.com.auth.repository.AuthorityRepository;
@@ -15,6 +19,8 @@ import pheonix.classconnect.backend.com.user.repository.UserRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -22,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final AuthorityRepository authorityRepository;
+    private final FileStorage fileStorage;
 
     @Override
     public void createUser(UserDTO.Create createDto) {
@@ -72,5 +79,13 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByStudentNo(studentNo)
                 .map(UserDTO.User::fromEntity)
                 .orElse(null);
+    }
+
+    @Override
+    public UserDTO.User findUserById(Long id) {
+        log.info("유저 조회 : {}", id);
+
+        return UserDTO.User.fromEntity(userRepository.findById(id)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보가 없습니다.")));
     }
 }

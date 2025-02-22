@@ -2,6 +2,7 @@ package pheonix.classconnect.backend.com.user.model;
 
 import lombok.Builder;
 import lombok.Data;
+import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
 import pheonix.classconnect.backend.com.auth.model.AuthorityDTO;
 import pheonix.classconnect.backend.com.department.model.DepartmentDTO;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
@@ -57,6 +58,18 @@ public class UserDTO {
 
     @Data
     @Builder
+    public static class Response00 {
+        private Long id;
+        private String name;
+        private String email;
+        private String studentNo;
+        private String department;
+        private FileResponse.Info profile;
+        private Short auth;
+    }
+
+    @Data
+    @Builder
     public static class Response01 {
         private Long id;
         private String name;
@@ -72,6 +85,8 @@ public class UserDTO {
         private String name;
         private String email;
         private String studentNo;
+        private String department;
+        private FileResponse.Info profile;
         private Short auth;
     }
 

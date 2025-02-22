@@ -3,13 +3,22 @@ package pheonix.classconnect.backend.com.user.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.web.bind.annotation.*;
+import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
+import pheonix.classconnect.backend.com.attachment.model.File;
+import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
+import pheonix.classconnect.backend.com.attachment.service.FileStorage;
+import pheonix.classconnect.backend.com.auth.model.AuthorityDTO;
 import pheonix.classconnect.backend.com.common.model.Response;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.service.UserService;
+import pheonix.classconnect.backend.exceptions.ErrorCode;
+import pheonix.classconnect.backend.exceptions.MainApplicationException;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -17,6 +26,41 @@ import pheonix.classconnect.backend.com.user.service.UserService;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final FileStorage fileStorage;
+
+    @GetMapping("/users/{id}/profile")
+    public Response<UserDTO.Response00> getUserProfile(@PathVariable(value = "id") Long userId,
+                                                       @AuthenticationPrincipal User user) {
+        log.info("UserController.getUserProfile({})", userId);
+
+        // 요청 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "사용자 권한 정보가 없습니다.");
+        }
+
+        UserDTO.User usr = userService.findUserById(userId);
+
+        // 프로필 세팅
+        List<File> files = fileStorage.getAttachmentList(AttachmentDomainType.PROFILE, userId);
+        FileResponse.Info profileImg = files.isEmpty() ? new FileResponse.Info() : FileResponse.Info.fromFile(files.getFirst());
+
+        // 응답 SET
+        UserDTO.Response00 res = UserDTO.Response00.builder()
+                .id(usr.getId())
+                .name(usr.getName())
+                .email(usr.getEmail())
+                .studentNo(usr.getStudentNo())
+                .department(usr.getDepartment().getName())
+                .auth(usr.getAuthorities().stream()
+                        .map(AuthorityDTO.AuthorityInfo::getCode)
+                        .max(Short::compare)
+                        .orElse((short) 0))
+                .build();
+
+        res.setProfile(profileImg);
+
+        return Response.ok(HttpStatus.OK, "프로필을 조회했습니다.", res);
+    }
 
 //    // 회원가입
 //    @PostMapping("/users/sign-up")
