@@ -43,7 +43,8 @@ public class MentoringService {
 
     // 조회 구분
     private static final int 멘토ID기준월별조회 = 1;
-    private static final int 멘티ID기준월별조회 = 2;
+    private static final int 신청자ID기준월별조회 = 2;
+    private static final int 멘티ID기준월별조회 = 3;
 
     public void createRequest(MentoringRequestDTO.Create dto) {
         log.info("멘토링 요청 생성");
@@ -228,9 +229,9 @@ public class MentoringService {
     }
 
     // 멘토링 조회
-    public List<MentoringRequestDTO.MentoringRequest> getMentoringRequests(Long mentorId, Long requesterId, Long courseId, int year, int month) {
+    public List<MentoringRequestDTO.MentoringRequest> getMentoringRequests(Long mentorId, Long requesterId, Long menteeId, Long courseId, int year, int month) {
         // 요청값 검증
-        if (mentorId == null && requesterId == null && courseId == null) {
+        if (mentorId == null && requesterId == null && menteeId == null && courseId == null) {
             throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_PARAMETER_NULL, "멘토 ID 또는 요청자 ID 또는 코스 ID 중 최소 하나는 필수 값입니다.");
         }
 
@@ -239,10 +240,13 @@ public class MentoringService {
         // 조회 기준 SET
         int searchType = 0;
 
-        if (mentorId != null && requesterId == null && courseId != null && year > 0 && month > 0) {
+        if (mentorId != null && requesterId == null && menteeId == null && courseId != null && year > 0 && month > 0) {
             searchType = 멘토ID기준월별조회;
         }
-        else if (mentorId == null && requesterId != null && courseId != null && year > 0 && month > 0) {
+        else if (mentorId == null && requesterId != null && menteeId == null && courseId != null && year > 0 && month > 0) {
+            searchType = 신청자ID기준월별조회;
+        }
+        else if (mentorId == null && requesterId == null && menteeId != null && courseId != null && year > 0 && month > 0) {
             searchType = 멘티ID기준월별조회;
         }
 
@@ -256,13 +260,31 @@ public class MentoringService {
                 requests = mentoringRequestRepository.findAllByMentorIdAndCourseIdAndDateBetween(mentorId, courseId, from, to);
                 break;
             }
-            case 멘티ID기준월별조회: {
-                log.info("멘티 기준 월별 조회 - 멘토 ID = [{}]", requesterId);
+            case 신청자ID기준월별조회: {
+                log.info("신청자 기준 월별 조회 - 신청자 ID = [{}]", requesterId);
                 LocalDate from = LocalDate.of(year, month, 1);
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
                 requests = mentoringRequestRepository.findAllByRequesterIdAndCourseIdAndDateBetween(requesterId, courseId, from, to);
                 break;
             }
+            case 멘티ID기준월별조회: {
+                log.info("멘티 기준 월별 조회 - 멘티 ID = [{}]", menteeId);
+                // 멘티가 서비스에 가입되지 않은 경우 UserNotFound 에러 발생
+                UserEntity mentee = userRepository.findById(menteeId)
+                                .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보를 찾을 수 없습니다."));
+                if (courseMemberEntityRepository.existsByUserIdAndRole(menteeId, CourseRole.MENTEE)) {
+                    throw new MainApplicationException(ErrorCode.MENTEE_NOT_FOUND, "코스의 멘티가 아닙니다.");
+                }
+
+                LocalDate from = LocalDate.of(year, month, 1);
+                LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
+
+                requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatus(courseId, from, to, MentoringStatus.승인).stream()
+                        .filter(req -> req.getMentees().containsKey(mentee.getStudentNo()))
+                        .toList();
+                break;
+            }
+
             default: {
                 throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, String.format("지원하지 않는 조회 구분입니다. [%d]", searchType));
             }
@@ -297,6 +319,59 @@ public class MentoringService {
 
         return requestList;
     }
+
+    public int getMentoringCount(Long mentorId, Long menteeId, Long courseId, int year, int month) {
+        log.info("멘토링 횟수 Count");
+
+        int searchType = 0;
+        int count = 0;
+
+        // 입력값 검증
+        if (mentorId == null && menteeId != null) {
+            searchType = 2; /*멘티별 멘토링 횟수 Count*/
+        }
+        if (courseId == 0) {
+            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "코스 ID는 필수 입력값입니다.");
+        }
+        if (year == 0) {
+            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "연도는 필수 입력값입니다.");
+        }
+        if (month == 0) {
+            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "연도는 필수 입력값입니다.");
+        }
+
+        // 본처리
+        switch (searchType) {
+            case 2: {
+                // 멘티 검증
+                UserEntity mentee = userRepository.findById(menteeId)
+                        .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보를 찾을 수 없습니다."));
+                if (courseMemberEntityRepository.existsByUserIdAndRole(menteeId, CourseRole.MENTEE)) {
+                    throw new MainApplicationException(ErrorCode.MENTEE_NOT_FOUND, "코스의 멘티가 아닙니다.");
+                }
+
+                LocalDate from = LocalDate.of(year, month, 1);
+                LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
+
+                List<MentoringRequestEntity> requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatus(courseId, from, to, MentoringStatus.승인);
+
+                // 멘티별 멘토링 개수 count
+                if (!requests.isEmpty()) {
+                    for (MentoringRequestEntity request : requests) {
+                        if (request.getMentees().containsKey(mentee.getStudentNo()))
+                            count++;
+                    }
+                }
+                break;
+            }
+
+            default:
+                throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "지원하지 않는 조회 구분입니다.");
+        }
+
+        return count;
+    }
+
 
     // 멘토링 상세 조회
     public MentoringRequestDTO.MentoringRequest getMentoringRequest(Long id) {

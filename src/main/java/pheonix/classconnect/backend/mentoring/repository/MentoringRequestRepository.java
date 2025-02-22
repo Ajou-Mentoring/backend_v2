@@ -16,6 +16,5 @@ public interface MentoringRequestRepository extends JpaRepository<MentoringReque
 
     List<MentoringRequestEntity> findAllByRequesterIdAndCourseIdAndDateBetween(Long requesterId, Long courseId, LocalDate start, LocalDate end);
 
-    // 월별 멘티 신청 내역 조회
-    //List<MentoringRequestEntity> findAllByCourseIdAndMenteeByMonth()
+    List<MentoringRequestEntity> findAllByCourseIdAndDateBetweenAndStatus(Long courseId, LocalDate start, LocalDate end, Short status);
 }

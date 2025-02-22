@@ -102,6 +102,7 @@ public class MentoringController {
                                                                                @RequestParam(value = "month") int month,
                                                                                @RequestParam(value = "mentor", required = false) Long mentorId,
                                                                                @RequestParam(value = "requester", required = false) Long requesterId,
+                                                                               @RequestParam(value = "mentee", required = false) Long menteeId,
                                                                                @AuthenticationPrincipal User user) {
         log.info("MentoringController.getMentoringRequests({} {} {} {} {})", courseId, year, month, mentorId, requesterId);
 
@@ -114,7 +115,7 @@ public class MentoringController {
             throw new MainApplicationException(ErrorCode.MENTOR_UNAUTHORIZED, "코스 멤버 또는 관리자만 접근 가능한 요청입니다.");
         }
 
-        List<MentoringRequestDTO.Response01> res = mentoringService.getMentoringRequests(mentorId, requesterId, courseId, year, month).stream()
+        List<MentoringRequestDTO.Response01> res = mentoringService.getMentoringRequests(mentorId, requesterId, menteeId, courseId, year, month).stream()
                 .map(request -> MentoringRequestDTO.Response01.builder()
                         .id(request.getId())
                         .mentor(UserDTO.Response01.builder()
