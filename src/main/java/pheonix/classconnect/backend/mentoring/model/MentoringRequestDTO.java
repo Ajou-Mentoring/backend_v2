@@ -152,6 +152,7 @@ public class MentoringRequestDTO {
         private LocalTime startTime;
         private LocalTime endTime;
         private Short mentoringType;
+        private Short status;
         private String content;
         private List<Mentee> mentees;
         private boolean isRegistered;

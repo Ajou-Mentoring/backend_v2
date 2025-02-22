@@ -213,7 +213,7 @@ public class CourseController {
             int month = now.getMonthValue();
             /*현재 학기*/
             Short semester;
-            if (month >= 3 && month < 7) {
+            if (month >= 2 && month < 7) {
                 semester = Semester.SPRING;
             } else if (month >= 7 && month < 9) {
                 semester = Semester.SUMMER;
@@ -248,8 +248,6 @@ public class CourseController {
                             .name(mentor.getName())
                             .email(mentor.getEmail())
                             .courseName(course.getName())
-                            .mentoringCount(0)
-                            .earliestSchedule("현재 가능한 스케줄이 없습니다.")
                             .build());
                 }
             }
@@ -263,8 +261,6 @@ public class CourseController {
                             .name(mentor.getName())
                             .email(mentor.getEmail())
                             .courseName(courseService.getACourseById(courseId).getName())
-                            .mentoringCount(0)
-                            .earliestSchedule("현재 가능한 스케줄이 없습니다.")
                             .build());
                 }
             }
