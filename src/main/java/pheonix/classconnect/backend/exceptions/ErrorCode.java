@@ -27,6 +27,7 @@ public enum ErrorCode {
     COURSE_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "COURSE003", "코스 멤버 정보가 없습니다."),
     DUPLICATED_COURSE_MEMBER(HttpStatus.BAD_REQUEST, "COURSE004", "코스 멤버 중복입니다."),
     COURSE_NOT_OPEN(HttpStatus.BAD_REQUEST, "COURSE005", "코스가 개설 상태가 아닙니다."),
+    COURSE_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "COURSE006", "파라미터 오류입니다."),
 
     POST_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "POST001", "지원하지 않는 파라미터입니다."),
     POST_NOT_FOUND(HttpStatus.BAD_REQUEST, "POST002", "게시물을 찾을 수 없습니다."),

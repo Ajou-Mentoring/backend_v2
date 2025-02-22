@@ -272,7 +272,7 @@ public class MentoringService {
                 // 멘티가 서비스에 가입되지 않은 경우 UserNotFound 에러 발생
                 UserEntity mentee = userRepository.findById(menteeId)
                                 .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보를 찾을 수 없습니다."));
-                if (courseMemberEntityRepository.existsByUserIdAndRole(menteeId, CourseRole.MENTEE)) {
+                if (!courseMemberEntityRepository.existsByUserIdAndRole(menteeId, CourseRole.MENTEE)) {
                     throw new MainApplicationException(ErrorCode.MENTEE_NOT_FOUND, "코스의 멘티가 아닙니다.");
                 }
 
@@ -321,7 +321,7 @@ public class MentoringService {
     }
 
     public int getMentoringCount(Long mentorId, Long menteeId, Long courseId, int year, int month) {
-        log.info("멘토링 횟수 Count");
+        log.info("멘토링 횟수 Count : {}년 {}월, {} {} {}", year, month, mentorId, menteeId, courseId);
 
         int searchType = 0;
         int count = 0;
@@ -346,7 +346,7 @@ public class MentoringService {
                 // 멘티 검증
                 UserEntity mentee = userRepository.findById(menteeId)
                         .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보를 찾을 수 없습니다."));
-                if (courseMemberEntityRepository.existsByUserIdAndRole(menteeId, CourseRole.MENTEE)) {
+                if (!courseMemberEntityRepository.existsByUserIdAndRole(menteeId, CourseRole.MENTEE)) {
                     throw new MainApplicationException(ErrorCode.MENTEE_NOT_FOUND, "코스의 멘티가 아닙니다.");
                 }
 
@@ -354,10 +354,13 @@ public class MentoringService {
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
 
                 List<MentoringRequestEntity> requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatus(courseId, from, to, MentoringStatus.승인);
-
+                for (MentoringRequestEntity request : requests) {
+                    log.info("요청요청요청: {}", request.getId());
+                }
                 // 멘티별 멘토링 개수 count
                 if (!requests.isEmpty()) {
                     for (MentoringRequestEntity request : requests) {
+                        log.info("{}", request.getMentees().keySet());
                         if (request.getMentees().containsKey(mentee.getStudentNo()))
                             count++;
                     }
