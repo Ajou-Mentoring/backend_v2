@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
@@ -52,8 +51,8 @@ public class CourseController {
      * @return Response
      */
     @PostMapping(value = "/courses")
-    public Response<String> create(@RequestBody @Valid CourseCreateRequestDTO request,
-                                   @AuthenticationPrincipal User user
+    public Response<String> create(@ModelAttribute @Valid CourseCreateRequestDTO request,
+                           @AuthenticationPrincipal User user
                            ) {
 
         // 요청 검증 - 관리자인지

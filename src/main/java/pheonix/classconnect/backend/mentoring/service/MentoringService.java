@@ -465,6 +465,9 @@ public class MentoringService {
         if (schedules.isEmpty()) return new ArrayList<>();
 
         // TimeSlot 생성
+        for (ScheduleEntity s : schedules) {
+            log.info("{} {} {}", s.getStartTime(), s.getEndTime(), s.getId().getDate(), s.getId().getSerNo());
+        }
         List<ScheduleDTO.Schedule> timeSlots = generateTimeSlots(schedules);
 
         // 유저 아이디와 날짜 기준으로 승인대기/승인 상태인 요청 내역을 모두 조회
