@@ -33,7 +33,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final FileStorage fileStorage;
 
-    public void createPost(PostDTO.Create post, List<MultipartFile> images) {
+    public void createPost(PostDTO.Create post, List<Long> images) {
         log.info("게시물 생성");
 
         // 입력값 검증
@@ -64,13 +64,7 @@ public class PostService {
         // 게시물 저장
         Long id = postRepository.save(newPost).getId();
 
-
-        // 이미지 저장
-        if (!images.isEmpty()) {
-            images.forEach(image -> {
-                fileStorage.saveFile(image, AttachmentDomainType.POST, id);
-            });
-        }
+        fileStorage.changeImages(AttachmentDomainType.POST, id, images);
     }
 
     public PostDTO.Post getPost(Long id) {
@@ -139,6 +133,9 @@ public class PostService {
         }
 
         post.updatePost(updated.getPostType(), updated.getUploadStatus(), updated.getPublishType(), updated.getTitle(), updated.getContent());
+
+        // 이미지 수정
+        fileStorage.changeImages(AttachmentDomainType.POST, post.getId(), updated.getImages());
 
         postRepository.save(post);
     }

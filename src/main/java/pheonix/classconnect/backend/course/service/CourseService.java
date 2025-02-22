@@ -37,9 +37,10 @@ public class CourseService {
     private final FileStorage fileStorage;
 
     @Transactional
-    public void create(CourseDTO.Create dto, MultipartFile image) {
+    public void create(CourseDTO.Create dto, Long imageId) {
         Optional<CourseEntity> courseEntity = courseEntityRepository.findBySemesterAndYearAndCode(dto.getSemester(), dto.getYear(), dto.getCode());
 
+        // 검증 1. 동일한 학기에 동일한 수업 코드가 존재하는가?
         if (courseEntity.isPresent()) {
             throw new MainApplicationException(ErrorCode.DUPLICATED_COURSE, "해당 연도/학기에 동일한 코드를 갖는 코스가 존재합니다.");
         }
@@ -63,8 +64,11 @@ public class CourseService {
         // 코스 저장
         CourseEntity saved = courseEntityRepository.save(course);
 
-        // 이미지가 존재한다면 저장
-        fileStorage.saveFile(image, AttachmentDomainType.COURSE, saved.getId());
+        // 이미지가 존재한다면 매핑
+        File courseImage = fileStorage.getFileById(imageId);
+        if (courseImage != null) {
+            fileStorage.mapFileToDomain(imageId, AttachmentDomainType.COURSE, saved.getId());
+        }
     }
 
     @Transactional

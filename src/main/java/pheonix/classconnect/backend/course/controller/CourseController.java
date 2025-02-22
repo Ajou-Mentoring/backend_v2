@@ -51,7 +51,7 @@ public class CourseController {
      * @param user : Course 생성하는 Principal 객체
      * @return Response
      */
-    @PostMapping(value = "/courses", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
+    @PostMapping(value = "/courses")
     public Response<String> create(@ModelAttribute @Valid CourseCreateRequestDTO request,
                            @AuthenticationPrincipal User user
                            ) {

@@ -60,6 +60,7 @@ public class PostDTO {
         private Short postType;
         private Short uploadStatus;
         private Short publishType;
+        private List<Long> images;
     }
 
     /**
@@ -70,7 +71,7 @@ public class PostDTO {
     public static class Request01 {
         private String title;
         private String content;
-        List<MultipartFile> images;
+        List<Long> images;
     }
 
 

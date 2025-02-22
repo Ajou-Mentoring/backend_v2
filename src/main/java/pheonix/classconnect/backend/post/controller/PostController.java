@@ -34,7 +34,7 @@ public class PostController {
     private final FileStorage fileStorage;
     private final PrincipalDetailsService principalDetailsService;
 
-    @PostMapping(value = "/notice", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @PostMapping(value = "/notice")
     public Response<String> postNotice(@ModelAttribute PostDTO.Request01 request,
                                        @AuthenticationPrincipal User user) {
         log.info("PostController.postNotice()");
@@ -59,7 +59,7 @@ public class PostController {
         return Response.ok(HttpStatus.CREATED, "공지사항이 등록되었습니다.", null);
     }
 
-    @PutMapping(value = "/notice/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @PutMapping(value = "/notice/{id}")
     public Response<String> updateNotice(@PathVariable Long id,
                                        @ModelAttribute PostDTO.Request01 req,
                                        @AuthenticationPrincipal User user) {
@@ -77,19 +77,10 @@ public class PostController {
                 .postType(PostType.공지사항)
                 .uploadStatus(PostUploadStatus.수정)
                 .publishType(PostPublishType.전체)
+                .images(req.getImages())
                 .build();
 
         postService.updatePost(id, dto);
-
-        // 기존 이미지 제거
-        fileStorage.deleteAllFilesIn(AttachmentDomainType.POST, id);
-
-        // 새 이미지 추가
-        if (!req.getImages().isEmpty()) {
-            req.getImages().forEach(image -> {
-                fileStorage.saveFile(image, AttachmentDomainType.POST, id);
-            });
-        }
 
         return Response.ok(HttpStatus.CREATED, "공지사항이 수정되었습니다.", null);
     }
