@@ -52,8 +52,8 @@ public class CourseController {
      * @return Response
      */
     @PostMapping(value = "/courses")
-    public Response<String> create(@ModelAttribute @Valid CourseCreateRequestDTO request,
-                           @AuthenticationPrincipal User user
+    public Response<String> create(@RequestBody @Valid CourseCreateRequestDTO request,
+                                   @AuthenticationPrincipal User user
                            ) {
 
         // 요청 검증 - 관리자인지

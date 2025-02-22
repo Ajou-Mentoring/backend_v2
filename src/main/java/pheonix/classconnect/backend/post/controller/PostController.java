@@ -61,7 +61,7 @@ public class PostController {
 
     @PutMapping(value = "/notice/{id}")
     public Response<String> updateNotice(@PathVariable Long id,
-                                       @ModelAttribute PostDTO.Request01 req,
+                                       @RequestBody PostDTO.Request01 req,
                                        @AuthenticationPrincipal User user) {
         log.info("PostController.updateNotice()");
 

@@ -481,6 +481,7 @@ public class MentoringService {
 
         for (int i = 0; i < schedules.size(); i++) {
             ScheduleEntity current = schedules.get(i);
+            log.info("{} ~ {}", current.getStartTime(), current.getEndTime());
 
             LocalTime slotStart = current.getStartTime().withMinute(0).withSecond(0).withNano(0);
             if (current.getStartTime().getMinute() % 15 != 0) {
@@ -493,9 +494,17 @@ public class MentoringService {
                 ScheduleEntity next = schedules.get(i+1);
                 if (current.getEndTime().equals(next.getStartTime()) &&
                     Objects.equals(current.getSite(), MentoringSite.ALL)) {
+                    boolean endOfDay = false;
                     // 1. current가 site=1(전체)라면 겹치는 구간의 slot은 next의 site를 따라간다.
                     while (slotEnd.isBefore(next.getEndTime()) || slotEnd.equals(next.getEndTime())) {
                         short site = current.getSite();
+
+                        // 예외 처리
+                        if (slotEnd.equals(LocalTime.of(0, 0))) {
+                            slotEnd = LocalTime.of(23, 59);
+                            endOfDay = true;
+                        }
+
                         if (slotEnd.isAfter(next.getStartTime())) {
                             site = next.getSite();
                         }
@@ -511,12 +520,21 @@ public class MentoringService {
                         slotStart = slotStart.plusMinutes(15);
                         slotEnd = slotStart.plusMinutes(30);
 
+                        if (endOfDay)
+                            break;
                     }
                 } else {
+                    boolean endOfDay = false;
                     while (slotEnd.isBefore(current.getEndTime()) || slotEnd.equals(current.getEndTime())) {
                         short site = current.getSite();
 
-                            timeSlots.add(ScheduleDTO.Schedule.builder()
+                        // 예외 처리
+                        if (slotEnd.equals(LocalTime.of(0, 0))) {
+                            slotEnd = LocalTime.of(23, 59);
+                            endOfDay = true;
+                        }
+
+                        timeSlots.add(ScheduleDTO.Schedule.builder()
                                 .date(current.getId().getDate())
                                 .startTime(slotStart)
                                 .endTime(slotEnd)
@@ -524,14 +542,25 @@ public class MentoringService {
                                 .build());
                         slotStart = slotStart.plusMinutes(15);
                         slotEnd = slotStart.plusMinutes(30);
+
+                        if (endOfDay)
+                            break;
                     }
                 }
 
 
             }
             else {
+                boolean endOfDay = false;
                 while (slotEnd.isBefore(current.getEndTime()) || slotEnd.equals(current.getEndTime())) {
                     short site = current.getSite();
+
+                    // 예외 처리
+                    if (slotEnd.equals(LocalTime.of(0, 0))) {
+                        slotEnd = LocalTime.of(23, 59);
+                        endOfDay = true;
+                    }
+
 
                     timeSlots.add(ScheduleDTO.Schedule.builder()
                             .date(current.getId().getDate())
@@ -539,6 +568,9 @@ public class MentoringService {
                             .endTime(slotEnd)
                             .site(site)
                             .build());
+
+                    if (endOfDay)
+                        break;
                     slotStart = slotStart.plusMinutes(15);
                     slotEnd = slotStart.plusMinutes(30);
                 }
