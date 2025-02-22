@@ -28,20 +28,19 @@ public class UserController {
     private final UserService userService;
     private final FileStorage fileStorage;
 
-    @GetMapping("/users/{id}/profile")
-    public Response<UserDTO.Response00> getUserProfile(@PathVariable(value = "id") Long userId,
-                                                       @AuthenticationPrincipal User user) {
-        log.info("UserController.getUserProfile({})", userId);
+    @GetMapping("/users/me/profile")
+    public Response<UserDTO.Response00> getUserProfile(@AuthenticationPrincipal User user) {
+        log.info("UserController.getUserProfile()");
 
         // 요청 검증
         if (user == null) {
             throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "사용자 권한 정보가 없습니다.");
         }
 
-        UserDTO.User usr = userService.findUserById(userId);
+        UserDTO.User usr = userService.findUserById(Long.parseLong(user.getUsername()));
 
         // 프로필 세팅
-        List<File> files = fileStorage.getAttachmentList(AttachmentDomainType.PROFILE, userId);
+        List<File> files = fileStorage.getAttachmentList(AttachmentDomainType.PROFILE, usr.getId());
         FileResponse.Info profileImg = files.isEmpty() ? new FileResponse.Info() : FileResponse.Info.fromFile(files.getFirst());
 
         // 응답 SET
