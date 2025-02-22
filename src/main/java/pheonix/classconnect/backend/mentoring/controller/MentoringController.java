@@ -45,7 +45,7 @@ public class MentoringController {
                 .map(s -> ScheduleDTO.Response01.builder()
                         .startTime(s.getStartTime())
                         .endTime(s.getEndTime())
-                        .site(s.getSite())
+                        .mentoringType(s.getSite())
                         .build())
                 .toList();
 
@@ -293,4 +293,38 @@ public class MentoringController {
 
 
     }
+
+    @GetMapping("/courses/{courseId}/members/{memberId}/stats")
+    public Response<List<UserDTO.Response04>> getMembersStats(@PathVariable(value = "courseId") Long courseId,
+                                                              @PathVariable(value = "memberId") Long memberId,
+                                                              @RequestParam(value = "year") int year,
+                                                              @RequestParam(value = "month") int month,
+                                                              @RequestParam(value = "groupBy") String groupBy,
+                                                              @AuthenticationPrincipal User user)
+    {
+        log.info("CourseController.getMemberStats({}, {}, {}, {}, {})", courseId, memberId, year, month, groupBy);
+
+        if (courseId == null) {
+            throw new MainApplicationException(ErrorCode.COURSE_INVALID_PARAMETER, "코스 ID는 필수 값입니다.");
+        }
+        if (memberId == null) {
+            throw new MainApplicationException(ErrorCode.COURSE_INVALID_PARAMETER, "멤버 ID는 필수 값입니다.");
+        }
+        if (year == 0) {
+            throw new MainApplicationException(ErrorCode.COURSE_INVALID_PARAMETER, "연도는 필수 값입니다.");
+        }
+        if (month == 0) {
+            throw new MainApplicationException(ErrorCode.COURSE_INVALID_PARAMETER, "월은 필수 값입니다.");
+        }
+        if (groupBy == null) {
+            throw new MainApplicationException(ErrorCode.COURSE_INVALID_PARAMETER, "통계 기준(groupBy)은 필수 값입니다.");
+        }
+
+        // 멘토링 현황 조회 (승인 건만)
+        //mentoringService.
+
+        return null;
+    }
+
+
 }

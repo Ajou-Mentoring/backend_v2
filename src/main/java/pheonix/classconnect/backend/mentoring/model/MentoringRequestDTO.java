@@ -109,7 +109,7 @@ public class MentoringRequestDTO {
         @NotNull(message = "멘토링 종료 시간이 비어있습니다.")
         private LocalTime endTime;
         @NotNull(message = "멘토링 방식이 지정되지 않았습니다.")
-        private Short site;
+        private Short mentoringType;
         @NotNull(message = "신청 내용이 비어있습니다.")
         private String content;
         @NotNull(message = "멘티 정보가 비어있습니다.")
@@ -127,7 +127,7 @@ public class MentoringRequestDTO {
         @NotNull(message = "멘티 정보가 비어있습니다.")
         private List<Mentee> mentees;
         @NotNull(message = "멘토링 방식이 지정되지 않았습니다.")
-        private Short site;
+        private Short mentoringType;
         private List<Long> images;
         private List<Long> files;
     }
@@ -168,7 +168,7 @@ public class MentoringRequestDTO {
         private UserDTO.Response03 mentor;
         private LocalTime startTime;
         private LocalTime endTime;
-        private Short site;
+        private Short mentoringType;
         private List<UserDTO.Response03> mentees;
     }
 }
