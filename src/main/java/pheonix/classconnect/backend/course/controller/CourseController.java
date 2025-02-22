@@ -302,6 +302,23 @@ public class CourseController {
         return Response.ok(HttpStatus.OK, "코스 멤버를 조회했습니다.", result);
     }
 
+    // 멤버 권한 변경
+    @PatchMapping("/courses/{courseId}/members/{memberId}")
+    public Response<List<UserDTO.Response01>> changeRole(@PathVariable(value = "courseId") Long courseId,
+                                                         @PathVariable(value = "memberId") Long memberId,
+                                                         @RequestParam(value = "role") Short role,
+                                                         @AuthenticationPrincipal User user
+    ) {
+        log.info("CourseController.changeRole({}, {}, {})", courseId, memberId, role);
+
+        if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자 권한만 멤버 역할을 변경할 수 있습니다.");
+        }
+        courseMemberService.updateMemberRoleInCourse(courseId, memberId, role);
+
+        return Response.ok(HttpStatus.ACCEPTED, "멤버 역할을 수정했습니다.", null);
+    }
+
     @PostMapping("/courses/join")
     public Response joinCourse(
             @RequestParam @Valid String memberCode,

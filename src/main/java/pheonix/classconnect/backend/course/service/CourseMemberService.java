@@ -95,10 +95,22 @@ public class CourseMemberService {
         courseMemberEntityRepository.delete(member);
     }
 
-    public void updateMemberRoleInCourse(CourseEntity course, UserEntity user, UpdateMemberRoleDTO updateMemberRoleDTO) {
+    public void updateMemberRoleInCourse(Long courseId, Long userId, Short role) {
+        log.info("코스 역할 변경 : {} - {} => {}}", courseId, userId, role);
+
+        // 요청 검증
+        CourseEntity course = courseEntityRepository.findById(courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND, "코스 정보를 찾을 수 없습니다."));
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보를 찾을 수 없습니다."));
+
         CourseMemberEntity courseMember = courseMemberEntityRepository.findByUserIdAndCourseId( user.getId(), course.getId()).orElseThrow(
-                () -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "해당 유저가 클래스내에 존재하지 않습니다."));
-        courseMember.setRole(updateMemberRoleDTO.getRole());
+                () -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "해당 유저는 코스 멤버가 아닙니다."));
+
+        if (Objects.equals(courseMember.getRole(), role)) {
+            throw new MainApplicationException(ErrorCode.COURSE_MEMBER_BAD_REQUEST, "동일한 역할로 변경할 수 없습니다.");
+        }
+        courseMember.setRole(role);
         courseMemberEntityRepository.save(courseMember);
     }
 
