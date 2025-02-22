@@ -34,7 +34,7 @@ public class AttachmentController {
 
     private final FileStorage fileStorage;
 
-    @GetMapping("/images/{id}")
+    @GetMapping("/files/{id}")
     public ResponseEntity<byte[]> showImage (
             @PathVariable("id") Long fileId
     ) throws MalformedURLException {
@@ -54,7 +54,7 @@ public class AttachmentController {
         return response;
     }
 
-    @GetMapping("/download/{id}")
+    @GetMapping("/files/download/{id}")
     public ResponseEntity<Resource> downloadFile(@PathVariable("id") Long fileId) {
         log.info("파일 다운로드 : {}", fileId);
         // 파일을 찾는다.
@@ -78,7 +78,7 @@ public class AttachmentController {
         }
     }
 
-    @PostMapping(value = "images/upload")
+    @PostMapping(value = "/files/upload")
     public Response<Long> uploadImage(@RequestPart(name = "image") MultipartFile image)
     {
         log.info("이미지 업로드 ");
@@ -88,8 +88,8 @@ public class AttachmentController {
         return Response.ok(HttpStatus.CREATED, "파일 업로드에 성공했습니다.", stored.getId());
     }
 
-    @PostMapping(value = "images/upload-all")
-    public Response<List<Long>> uploadImages(@RequestPart(name = "images") List<MultipartFile> images)
+    @PostMapping(value = "/files/upload-all")
+    public Response<List<Long>> uploadFiles(@RequestPart(name = "files") List<MultipartFile> images)
     {
         log.info("이미지 다중 업로드");
 
@@ -119,7 +119,7 @@ public class AttachmentController {
         return Response.ok(HttpStatus.CREATED, "파일 업로드에 성공했습니다.", savedImageList.stream().map(File::getId).toList());
     }
 
-    @DeleteMapping(value="/file/{id}")
+    @DeleteMapping(value="/files/{id}")
     public Response<String> deleteFile(@AuthenticationPrincipal User user, @PathVariable("id") Long attachmentId) {
         log.info("파일 삭제");
 

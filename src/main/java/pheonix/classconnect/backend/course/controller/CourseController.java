@@ -57,7 +57,7 @@ public class CourseController {
                            ) {
 
         // 요청 검증 - 관리자인지
-        if (principalDetailsService.isAdmin(user)) {
+        if (!principalDetailsService.isAdmin(user)) {
             throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자 권한이 없습니다.");
         }
 
