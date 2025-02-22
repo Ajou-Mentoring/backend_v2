@@ -53,7 +53,7 @@ public class MentoringRequestEntity extends BaseTimeEntity {
     @Column(name = "site")
     private Short site;
 
-    @Column(name = "content", length = 200)
+    @Column(name = "content", length = 600)
     private String content;
 
     @Column(name = "comment", length = 200)
