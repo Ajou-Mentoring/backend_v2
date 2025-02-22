@@ -10,6 +10,4 @@ public class MentorResponse {
     private String courseName;
     private String name;
     private String email;
-    private String earliestSchedule;
-    private Integer mentoringCount;
 }
