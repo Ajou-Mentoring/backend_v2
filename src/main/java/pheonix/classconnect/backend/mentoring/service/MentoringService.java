@@ -30,6 +30,7 @@ import pheonix.classconnect.backend.mentoring.repository.MentoringResultReposito
 import pheonix.classconnect.backend.mentoring.repository.ScheduleRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -229,8 +230,9 @@ public class MentoringService {
             throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인 대기 또는 승인 상태인 요청만 거절할 수 있습니다.");
         }
         // 4. 멘토링 요청 거절 가능 기간인지 조회
-        if (Objects.equals(request.getStatus(), MentoringStatus.승인) && LocalDate.now().isAfter(request.getDate().minusDays(2))) {
-            throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 최소 2일 전까지 취소 가능합니다.");
+        if (Objects.equals(request.getStatus(), MentoringStatus.승인) &&
+                LocalDateTime.now().isAfter(LocalDateTime.of(request.getDate(), request.getStartTime()).minusHours(24))) {
+            throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 멘토링 시작 24시간 전까지 취소 가능합니다.");
         }
 
         request.cancel(comment);
