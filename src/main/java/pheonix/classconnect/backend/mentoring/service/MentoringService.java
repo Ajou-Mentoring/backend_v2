@@ -1,5 +1,6 @@
 package pheonix.classconnect.backend.mentoring.service;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import pheonix.classconnect.backend.com.user.entity.UserEntity;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
 import pheonix.classconnect.backend.course.constants.CourseRole;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
+import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
 import pheonix.classconnect.backend.course.repository.CourseEntityRepository;
 import pheonix.classconnect.backend.course.repository.CourseMemberEntityRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
@@ -18,10 +20,13 @@ import pheonix.classconnect.backend.exceptions.MainApplicationException;
 import pheonix.classconnect.backend.mentoring.contants.MentoringSite;
 import pheonix.classconnect.backend.mentoring.contants.MentoringStatus;
 import pheonix.classconnect.backend.mentoring.entity.MentoringRequestEntity;
+import pheonix.classconnect.backend.mentoring.entity.MentoringResultEntity;
 import pheonix.classconnect.backend.mentoring.entity.ScheduleEntity;
 import pheonix.classconnect.backend.mentoring.model.MentoringRequestDTO;
+import pheonix.classconnect.backend.mentoring.model.MentoringResultDTO;
 import pheonix.classconnect.backend.mentoring.model.ScheduleDTO;
 import pheonix.classconnect.backend.mentoring.repository.MentoringRequestRepository;
+import pheonix.classconnect.backend.mentoring.repository.MentoringResultRepository;
 import pheonix.classconnect.backend.mentoring.repository.ScheduleRepository;
 
 import java.time.LocalDate;
@@ -39,6 +44,7 @@ public class MentoringService {
     private final CourseMemberEntityRepository courseMemberEntityRepository;
     private final FileStorage fileStorage;
     private final MentoringRequestRepository mentoringRequestRepository;
+    private final MentoringResultRepository mentoringResultRepository;
     private final ScheduleRepository scheduleRepository;
 
     // 조회 구분
@@ -320,7 +326,7 @@ public class MentoringService {
         return requestList;
     }
 
-    public int getMentoringCount(Long mentorId, Long menteeId, Long courseId, int year, int month) {
+    public int getMentoringRequestCount(Long mentorId, Long menteeId, Long courseId, int year, int month) {
         log.info("멘토링 횟수 Count : {}년 {}월, {} {} {}", year, month, mentorId, menteeId, courseId);
 
         int searchType = 0;
@@ -354,13 +360,10 @@ public class MentoringService {
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
 
                 List<MentoringRequestEntity> requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatus(courseId, from, to, MentoringStatus.승인);
-                for (MentoringRequestEntity request : requests) {
-                    log.info("요청요청요청: {}", request.getId());
-                }
+
                 // 멘티별 멘토링 개수 count
                 if (!requests.isEmpty()) {
                     for (MentoringRequestEntity request : requests) {
-                        log.info("{}", request.getMentees().keySet());
                         if (request.getMentees().containsKey(mentee.getStudentNo()))
                             count++;
                     }
@@ -594,5 +597,187 @@ public class MentoringService {
         }
         // Slot이 request와 겹치는지 확인
         return !(slot.getEndTime().isBefore(request.getStartTime()) || slot.getStartTime().isAfter(request.getEndTime()));
+    }
+
+    // 증빙자료 관련 메서드
+    public List<MentoringResultDTO.MentoringResult> getMentoringResults(@NotNull Long courseId, @NotNull Long mentorId, @NotNull int year, @NotNull int month) {
+        log.info("멘토링 증빙자료 조회 - course: {} mentor: {} month: {}", courseId, mentorId, month);
+        List<MentoringResultDTO.MentoringResult> mentoringResults = new ArrayList<>();
+        try {
+            LocalDate start = LocalDate.of(year, month, 1);
+            LocalDate end = LocalDate.of(year, month+1, 1).minusDays(1);
+            List<MentoringResultEntity> mentoringLogEntityList = mentoringResultRepository.findAllByCourseIdAndMentorIdAndDateBetweenOrderByDateAscTimeAsc(courseId, mentorId, start, end);
+            if (!mentoringLogEntityList.isEmpty()) {
+                for (MentoringResultEntity result : mentoringLogEntityList) {
+                    MentoringResultDTO.MentoringResult dto = MentoringResultDTO.MentoringResult.fromEntity(result);
+                    // 이미지
+                    dto.setImages(fileStorage.getAttachmentList(AttachmentDomainType.MENTORING_RESULT, result.getId()));
+                    mentoringResults.add(dto);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return mentoringResults;
+    }
+
+    @Transactional
+    public void patchMentoringLogs(Long courseId, Long mentorId, List<MentoringResultDTO.Update> dto) {
+        log.info("멘토링 증빙자료 생성/수정/삭제");
+
+        CourseMemberEntity member = courseMemberEntityRepository.findByUserIdAndCourseId(mentorId, courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "멘토가 코스 멤버가 아닙니다."));
+        CourseEntity courseEntity = member.getCourse();
+        UserEntity mentorEntity = member.getUser();
+
+        for (MentoringResultDTO.Update resultDTO : dto) {
+            // action = 0 : 동작 없음, action = 1 : 생성/수정, action = -1 : 삭제
+            int action = resultDTO.getAction();
+            // action = 0 : 동작 없음
+            if (action == 0)
+                continue;
+            else if (action == 1) {
+                // id == null 이면 증빙자료 생성
+                if (resultDTO.getId() == null || resultDTO.getId() == 0L) {
+                    MentoringResultEntity newLog = MentoringResultEntity.builder()
+                            .date(resultDTO.getDate())
+                            .time(resultDTO.getTime())
+                            .length(resultDTO.getLength())
+                            .content(resultDTO.getContent())
+                            .location(resultDTO.getLocation())
+                            .mentor(mentorEntity)
+                            .course(courseEntity)
+                            .mentees(resultDTO.getMentees())
+                            .build();
+
+                    newLog = mentoringResultRepository.save(newLog);
+
+                    // 이미지 증빙자료 매핑
+                    if (!resultDTO.getImages().isEmpty()) {
+                        for (Long imgId : resultDTO.getImages()) {
+                            fileStorage.mapFileToDomain(imgId, AttachmentDomainType.MENTORING_RESULT, newLog.getId());
+                        }
+                    }
+                }
+                // id != null 이면 증빙자료 수정
+                else {
+                    MentoringResultEntity result = mentoringResultRepository.findById(resultDTO.getId())
+                            .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, "증빙자료를 찾을 수 없습니다."));
+
+                    result.updateResult(
+                            resultDTO.getDate(),
+                            resultDTO.getTime(),
+                            resultDTO.getLength(),
+                            result.getLocation(),
+                            result.getContent(),
+                            resultDTO.getMentees()
+                    );
+
+                    mentoringResultRepository.save(result);
+
+                    // 이미지 증빙자료 매핑 (필요시)
+                    fileStorage.changeImages(AttachmentDomainType.MENTORING_RESULT, result.getId(), resultDTO.getImages());
+                }
+            }
+            // 증빙자료 삭제
+            else if (action == -1) {
+                MentoringResultEntity result = mentoringResultRepository.findById(resultDTO.getId())
+                        .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, "증빙자료를 찾을 수 없습니다."));
+
+                MentoringRequestEntity request = mentoringRequestRepository.findById(result.getRequest().getId())
+                        .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, "멘토링 신청 내역을 찾을 수 없습니다."));
+
+                request.setRegistered(false);
+                mentoringRequestRepository.save(request);
+
+                // 이미지 파일 삭제
+                fileStorage.deleteAllFilesIn(AttachmentDomainType.MENTORING_RESULT, resultDTO.getId());
+
+                // 증빙자료 삭제
+                mentoringResultRepository.delete(result);
+
+            }
+        }
+    }
+
+    @Transactional
+    public void createLog(MentoringResultDTO.Create dto) {
+        log.info("증빙자료 생성");
+
+        CourseMemberEntity member = courseMemberEntityRepository.findByUserIdAndCourseId(dto.getMentorId(), dto.getCourseId())
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "멘토가 코스 멤버가 아닙니다."));
+
+        CourseEntity course = member.getCourse();
+        UserEntity mentor = member.getUser();
+
+        MentoringRequestEntity request = dto.getRequestId() == null ? null : mentoringRequestRepository.findById(dto.getRequestId())
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, "멘토링 신청 내역을 찾을 수 없습니다."));
+        if (request != null && !Objects.equals(request.getStatus(), MentoringStatus.승인)) {
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_INVALID_PARAMETER, "승인 상태의 신청 내역만 증빙자료 작성이 가능합니다.");
+        }
+
+        MentoringResultEntity created = MentoringResultEntity.builder()
+                .date(dto.getDate())
+                .time(dto.getTime())
+                .length(dto.getLength())
+                .content(dto.getContent())
+                .location(dto.getLocation())
+                .mentor(mentor)
+                .course(course)
+                .request(request)
+                .mentees(dto.getMentees())
+                .build();
+
+        Long resultId = mentoringResultRepository.save(created).getId();
+
+        if (request != null) {
+            request.setRegistered(true);
+            mentoringRequestRepository.save(request);
+        }
+
+        // 이미지 매핑
+        if (!dto.getImages().isEmpty()) {
+            for (Long imgId : dto.getImages()) {
+                fileStorage.mapFileToDomain(imgId, AttachmentDomainType.MENTORING_RESULT, resultId);
+            }
+        }
+    }
+
+//    @Override
+//    public MentoringLog updateLog(MentoringLog updatedLog) {
+//        log.info("멘토링 증빙자료 수정 : {} ", updatedLog.getId());
+//        MentoringResultEntity updated = mentoringResultRepository.findById(updatedLog.getId()).orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_NOT_FOUND, "MentoringLog Not Found"));
+//
+//        updated.updateMentoringLogDetails(updatedLog);
+//
+//        return MentoringLog.fromEntity(mentoringResultRepository.save(updated));
+//    }
+
+    public void deleteLog(Long logId) {
+        log.info("멘토링 증빙자료 삭제 : {}", logId);
+        MentoringResultEntity deleted = mentoringResultRepository.findById(logId).orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, "증빙자료를 찾을 수 없습니다."));
+
+        mentoringResultRepository.delete(deleted);
+    }
+
+    public int getMentoringResultCount(Long mentorId, Long courseId, int year, int month) {
+        // 입력값 검증
+        if (mentorId == null) {
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "멘토 아이디가 널입니다.");
+        }
+        if (courseId == 0) {
+            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "코스 ID는 필수 입력값입니다.");
+        }
+        if (year == 0) {
+            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "연도는 필수 입력값입니다.");
+        }
+        if (month == 0) {
+            throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, "연도는 필수 입력값입니다.");
+        }
+
+        LocalDate from = LocalDate.of(year, month, 1);
+        LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
+
+        return mentoringResultRepository.findAllByCourseIdAndMentorIdAndDateBetweenOrderByDateAscTimeAsc(courseId, mentorId, from, to).size();
     }
 }
