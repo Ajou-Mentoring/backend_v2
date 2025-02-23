@@ -118,7 +118,6 @@ public class CourseMemberService {
         log.info("findMentors()");
 
         // 2. courseId != 0 이면 해당 코스의 멘토 정보 조회
-
         return courseMemberEntityRepository.findAllByCourseIdAndRole(courseId, CourseRole.MENTOR).stream()
                 .map(CourseMemberEntity::getUser)
                 .map(UserDTO.User::fromEntity)

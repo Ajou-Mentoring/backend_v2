@@ -2,10 +2,7 @@ package pheonix.classconnect.backend.mentoring.entity;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.Type;
@@ -64,6 +61,7 @@ public class MentoringRequestEntity extends BaseTimeEntity {
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private CourseEntity course;
 
+    @Setter
     @Column(name = "isRegistered")
     private boolean registered;
 
@@ -84,10 +82,6 @@ public class MentoringRequestEntity extends BaseTimeEntity {
     public void cancel(String comment) {
         this.status = MentoringStatus.취소;
         this.comment = comment;
-    }
-
-    public void setRegistered() {
-        this.registered = true;
     }
 
     public void updateRequest(String content, Map<String, Object> mentees, Short site) {

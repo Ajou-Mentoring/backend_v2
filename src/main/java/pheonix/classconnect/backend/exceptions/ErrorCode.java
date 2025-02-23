@@ -44,7 +44,10 @@ public enum ErrorCode {
     MENTORING_REQUEST_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "MENTOR005", "멘토링 파라미터 오류입니다."),
     MENTORING_REQUEST_FORBIDDEN_REQUEST(HttpStatus.FORBIDDEN, "MENTOR006", "지원하지 않는 멘토링 요청입니다."),
     MENTORING_REQUEST_ERROR(HttpStatus.BAD_REQUEST, "MENTOR007", "멘토링 신청 오류입니다."),
-    MENTEE_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR008", "멘티를 찾을 수 없습니다.");
+    MENTEE_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR008", "멘티를 찾을 수 없습니다."),
+    MENTORING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR009", "증빙자료를 찾을 수 없습니다."),
+    MENTORING_RESULT_PARAMETER_NULL(HttpStatus.BAD_REQUEST, "MENTOR010", "증빙자료 파라미터가 널입니다."),
+    MENTORING_RESULT_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "MENTOR011", "증빙자료 파라미터가 유효하지 않은 값입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

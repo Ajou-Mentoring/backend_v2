@@ -15,6 +15,7 @@ import pheonix.classconnect.backend.course.service.CourseMemberService;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 import pheonix.classconnect.backend.mentoring.model.MentoringRequestDTO;
+import pheonix.classconnect.backend.mentoring.model.MentoringResultDTO;
 import pheonix.classconnect.backend.mentoring.model.ScheduleDTO;
 import pheonix.classconnect.backend.mentoring.service.MentoringService;
 import pheonix.classconnect.backend.security.service.PrincipalDetailsService;
@@ -343,7 +344,7 @@ public class MentoringController {
                         continue;
                     int count = 0;
                     try {
-                        count = mentoringService.getMentoringCount(null, member.getUser().getId(), courseId, year, month);
+                        count = mentoringService.getMentoringRequestCount(null, member.getUser().getId(), courseId, year, month);
                     } catch (MainApplicationException e) {
                         // 서비스에 가입한 멘티가 아닌 경우 출력에서 제외
                         if (e.getErrorCode().equals(ErrorCode.MENTEE_NOT_FOUND))
@@ -364,10 +365,156 @@ public class MentoringController {
                 }
             }
         }
+        // 2. 증빙자료 현황(통계) 조회
+        if (groupBy.equalsIgnoreCase("RESULT")) {
+            // memberId == 0 일 경우 전체 조회
+            if (memberId == 0L) {
+                // 멘토링 현황 조회 (승인 건만)
+                List<UserDTO.User> mentors = courseMemberService.findMentors(courseId);
+
+                for (UserDTO.User mentor : mentors) {
+                    int count = mentoringService.getMentoringResultCount(mentor.getId(), courseId, year, month);
+
+                    res.add(UserDTO.Response04.builder()
+                            .id(mentor.getId())
+                            .email(mentor.getEmail())
+                            .name(mentor.getName())
+                            .studentNo(mentor.getStudentNo())
+                            .courseRole(CourseRole.MENTOR)
+                            .count(count)
+                            .build());
+                }
+            }
+        }
 
 
         return Response.ok(HttpStatus.OK, String.format("%d년 %d월 멘토링 진행 현황을 조회했습니다.", year, month), res);
     }
 
+    // 증빙자료 조회
+    @GetMapping("/courses/{courseId}/results")
+    public Response<List<MentoringResultDTO.Response01>> getMentoringResults(@PathVariable(value = "courseId") Long courseId,
+                                                                             @RequestParam(value = "mentorId") Long mentorId,
+                                                                             @RequestParam(value = "year", defaultValue = "2025") int year,
+                                                                             @RequestParam(value = "month", defaultValue = "3") int month,
+                                                                             @AuthenticationPrincipal User user) {
+        log.info("MentoringController.getMentoringResults({}, {}, {}, {})", courseId, mentorId, year, month);
 
+        // 요청 검증
+        if (courseId == null)
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID는 필수 값입니다.");
+        if (mentorId == null)
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID는 필수 값입니다.");
+
+        if (user == null || (!principalDetailsService.isAdmin(user)) && (Long.parseLong(user.getUsername()) != mentorId)) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "요청 권한이 없습니다.");
+        }
+
+        List<MentoringResultDTO.Response01> respond = mentoringService.getMentoringResults(courseId, mentorId, year, month).stream()
+                .map(res -> MentoringResultDTO.Response01.builder()
+                        .id(res.getId())
+                        .date(res.getDate())
+                        .time(res.getTime())
+                        .content(res.getContent())
+                        .duration(res.getLength())
+                        .location(res.getLocation())
+                        .images(res.getImages().stream()
+                                .map(FileResponse.Info::fromFile)
+                                .toList())
+                        .mentees(res.getMentees().keySet().stream()
+                                .map(key -> MentoringResultDTO.Mentee.builder()
+                                        .name(res.getMentees().get(key).toString())
+                                        .studentNo(key)
+                                        .build())
+                                .toList())
+                        .action(0)
+                        .build())
+                .toList();
+
+
+        return Response.ok(HttpStatus.OK, "증빙자료 리스트를 조회했습니다.", respond);
+    }
+
+    // 증빙자료 업로드 (단일)
+    @PostMapping("/courses/{courseId}/results")
+    public Response postMentoringResult(@PathVariable(value = "courseId") Long courseId,
+                                        @RequestBody MentoringResultDTO.Request01 req,
+                                        @AuthenticationPrincipal User user) {
+        log.info("MentoringController.postMentoringResult({})", courseId);
+
+        // 요청 검증
+        if (courseId == null) {
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID가 널입니다.");
+        }
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "권한 정보가 없습니다.");
+        }
+
+        if (req.getMentees().isEmpty()) {
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_INVALID_PARAMETER, "멘티 목록이 비어있습니다.");
+        }
+
+        MentoringResultDTO.Create dto = MentoringResultDTO.Create.builder()
+                .date(req.getDate())
+                .time(req.getTime())
+                .length(req.getDuration())
+                .content(req.getContent())
+                .location(req.getLocation())
+                .mentees(getMenteesFromList(req.getMentees()))
+                .images(req.getImages())
+                .mentorId(Long.parseLong(user.getUsername()))
+                .courseId(courseId)
+                .requestId(req.getRequest())
+                .build();
+
+        mentoringService.createLog(dto);
+
+        return Response.ok(HttpStatus.CREATED, "증빙자료를 생성하였습니다.", null);
+    }
+
+    private static Map<String, Object> getMenteesFromList(List<MentoringResultDTO.Mentee> menteeList) {
+        Map<String, Object> mentees = new HashMap<>();
+        for (MentoringResultDTO.Mentee mentee : menteeList) {
+            if (mentees.containsKey(mentee.getStudentNo())) {
+                throw new MainApplicationException(ErrorCode.MENTORING_RESULT_INVALID_PARAMETER, String.format("멘티 학번 중복입니다. [%s]", mentee.getStudentNo()));
+            }
+            mentees.put(mentee.getStudentNo(), mentee.getName());
+        }
+        return mentees;
+    }
+
+    // 증빙자료 수정
+    @PatchMapping("courses/{courseId}/results")
+    public Response patchMentoringResults(@PathVariable(value = "courseId") Long courseId,
+                                          @AuthenticationPrincipal User user,
+                                          @RequestBody List<MentoringResultDTO.Request02> req)
+    {
+        log.info("MentoringController().patchMentoringResults({})", courseId);
+
+        // 요청 검증
+        if (courseId == null) {
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID가 널입니다.");
+        }
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "권한 정보가 없습니다.");
+        }
+
+        List<MentoringResultDTO.Update> dtoList = req.stream()
+                .map(result -> MentoringResultDTO.Update.builder()
+                        .id(result.getId())
+                        .date(result.getDate())
+                        .time(result.getTime())
+                        .length(result.getDuration())
+                        .location(result.getLocation())
+                        .content(result.getContent())
+                        .images(result.getImages())
+                        .mentees(getMenteesFromList(result.getMentees()))
+                        .action(result.getAction())
+                        .build())
+                        .toList();
+
+        mentoringService.patchMentoringLogs(courseId, Long.parseLong(user.getUsername()), dtoList);
+
+        return Response.ok(HttpStatus.ACCEPTED, "증빙자료를 수정했습니다.", null);
+    }
 }
