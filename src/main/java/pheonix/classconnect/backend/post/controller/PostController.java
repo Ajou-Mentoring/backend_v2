@@ -35,7 +35,7 @@ public class PostController {
     private final PrincipalDetailsService principalDetailsService;
 
     @PostMapping(value = "/notice")
-    public Response<String> postNotice(@ModelAttribute PostDTO.Request01 request,
+    public Response<String> postNotice(@RequestBody PostDTO.Request01 request,
                                        @AuthenticationPrincipal User user) {
         log.info("PostController.postNotice()");
 
