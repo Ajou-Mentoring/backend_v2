@@ -68,6 +68,12 @@ public class UserController {
     }
 
 
+    /**
+     * 현재 로그인한 사용자의 알림 목록을 조회하는 API
+     * @param dto : 페이징 처리를 위한 요청 객체
+     * @param user : 현재 인증된 사용자 객체
+     * @return 사용자의 알림 목록을 담은 Response 객체
+     */
     @GetMapping("/users/me/notifications")
     public Response<PageResponse> getMyNotifications(@ModelAttribute PageRequest dto, @AuthenticationPrincipal User user){
 
@@ -76,6 +82,11 @@ public class UserController {
         return Response.ok(HttpStatus.OK, "내 알림을 조회하였습니다.", notificationService.getMyNotifications(userId, dto));
     }
 
+    /**
+     * 현재 로그인한 사용자의 읽지 않은 알림 개수를 조회하는 API
+     * @param user : 현재 인증된 사용자 객체
+     * @return 읽지 않은 알림 개수를 담은 Response 객체
+     */
     @GetMapping("/users/me/notifications/unread-count")
     public Response<Integer> getMyUnReadNotificationsCount(@AuthenticationPrincipal org.springframework.security.core.userdetails.User user){
 

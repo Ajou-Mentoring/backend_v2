@@ -16,6 +16,13 @@ import pheonix.classconnect.backend.security.utils.PrincipalUtils;
 public class NotificationController {
     private final NotificationService notificationService;
 
+
+    /**
+     * 특정 알림을 읽음 상태로 변경하는 API
+     * @param user : 현재 인증된 사용자 객체
+     * @param notificationId : 읽음 처리할 알림 ID
+     * @return 처리 결과를 담은 Response 객체
+     */
     @PatchMapping("/{id}/read")
     public Response updateNotificationIsRead(@AuthenticationPrincipal org.springframework.security.core.userdetails.User user  ,
                                              @PathVariable(name="id") Long notificationId){
@@ -23,6 +30,12 @@ public class NotificationController {
         return Response.ok("알림을 읽은 상태로 변경하였습니다.");
     }
 
+
+    /**
+     * 현재 로그인한 사용자의 모든 알림을 읽음 상태로 변경하는 API
+     * @param user : 현재 인증된 사용자 객체
+     * @return 처리 결과를 담은 Response 객체
+     */
     @PatchMapping("/read")
     public Response updateAllNotificationsRead(@AuthenticationPrincipal org.springframework.security.core.userdetails.User user  ){
         notificationService.updateAllNotificationsRead(PrincipalUtils.getUserId(user));

@@ -8,6 +8,8 @@ import pheonix.classconnect.backend.notification.constants.NotificationDomain;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity(name = "Notification")
 @Table(name = "Notification")
@@ -19,7 +21,7 @@ import java.time.Instant;
 public class NotificationEntity  {
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
-    private Integer id = null;
+    private Long id = null;
 
     @ManyToOne
     @JoinColumn(name= "user_id", nullable = false)
@@ -40,13 +42,20 @@ public class NotificationEntity  {
     private NotificationDomain domain;
 
     @Column(name = "domain_id", nullable = false)
-    private Integer domainId;
+    private Long domainId;
 
-    @Column(name = "created_at", updatable = false)
-    private Timestamp createdAt;
+    @Column(name = "created_date", updatable = false)
+    private LocalDate createdDate;
+
+    @Column(name = "created_time", updatable = false)
+    private LocalTime createdTime;
+
+
 
     @PrePersist
     void createdAt() {
-        this.createdAt = Timestamp.from(Instant.now());
+        this.createdDate = LocalDate.now();
+        this.createdTime = LocalTime.now();
     }
+
 }
