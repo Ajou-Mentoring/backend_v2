@@ -468,9 +468,6 @@ public class MentoringService {
         if (schedules.isEmpty()) return new ArrayList<>();
 
         // TimeSlot 생성
-        for (ScheduleEntity s : schedules) {
-            log.info("{} {} {} {}", s.getStartTime(), s.getEndTime(), s.getId().getDate(), s.getId().getSerNo());
-        }
         List<ScheduleDTO.Schedule> timeSlots = generateTimeSlots(schedules);
 
         // 유저 아이디와 날짜 기준으로 승인대기/승인 상태인 요청 내역을 모두 조회
@@ -596,7 +593,7 @@ public class MentoringService {
             return false;
         }
         // Slot이 request와 겹치는지 확인
-        return !(slot.getEndTime().isBefore(request.getStartTime()) || slot.getStartTime().isAfter(request.getEndTime()));
+        return !(slot.getEndTime().isBefore(request.getStartTime()) || slot.getStartTime().isAfter(request.getEndTime()) || slot.getStartTime().equals(request.getEndTime()));
     }
 
     // 증빙자료 관련 메서드
