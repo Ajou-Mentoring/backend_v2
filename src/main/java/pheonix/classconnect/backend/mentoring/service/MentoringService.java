@@ -108,8 +108,8 @@ public class MentoringService {
         }
 
         // 겹치는 시간 대에 멘토링이 존재하는지 검증
-        boolean conflict = mentoringRequestRepository.findAllByUserAndDateAndStatusIn(dto.getMentorId(), dto.getDate(), List.of(MentoringStatus.승인대기, MentoringStatus.승인)).stream()
-                .anyMatch(request -> !((dto.getEndTime().isBefore(request.getStartTime()) || dto.getEndTime().equals(request.getStartTime())) &&
+        boolean conflict = !mentoringRequestRepository.findAllByUserAndDateAndStatusIn(dto.getMentorId(), dto.getDate(), List.of(MentoringStatus.승인대기, MentoringStatus.승인)).stream()
+                .allMatch(request -> ((dto.getEndTime().isBefore(request.getStartTime()) || dto.getEndTime().equals(request.getStartTime())) ||
                         (dto.getStartTime().isAfter(request.getEndTime()) || dto.getStartTime().equals(request.getEndTime()))));
 
         if (conflict) {
