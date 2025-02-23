@@ -181,7 +181,7 @@ public class FileStorageImpl implements FileStorage {
         log.info("이미지 리스트 변경 : {} {} -> {}", domainType, domainId, updated.toString());
 
         // 변경된 이미지 리스트에 포함되지 않는 파일은 삭제한다.
-        List<Long> saved = getAttachmentList(AttachmentDomainType.MENTORING_REQUEST, domainId).stream()
+        List<Long> saved = getAttachmentList(domainType, domainId).stream()
                 .filter(file -> isImage(file.getType()))
                 .map(File::getId).toList();
 
@@ -204,7 +204,7 @@ public class FileStorageImpl implements FileStorage {
                         log.error("저장된 파일을 찾을 수 없습니다. {}", fileId);
                         continue;
                     }
-                    mapFileToDomain(fileId, AttachmentDomainType.MENTORING_REQUEST, domainId);
+                    mapFileToDomain(fileId, domainType, domainId);
                 }
             }
         }

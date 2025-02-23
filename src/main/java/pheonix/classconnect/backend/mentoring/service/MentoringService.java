@@ -171,8 +171,8 @@ public class MentoringService {
         LocalTime startTime = request.getStartTime();
         LocalTime endTime = request.getEndTime();
 
-        boolean conflict = mentoringRequestRepository.findAllByUserAndDateAndStatusIn(mentorId, date, List.of(MentoringStatus.승인대기, MentoringStatus.승인)).stream()
-                .anyMatch(req -> ((endTime.isBefore(req.getStartTime()) || endTime.equals(req.getStartTime())) &&
+        boolean conflict = !mentoringRequestRepository.findAllByUserAndDateAndStatusIn(mentorId, date, List.of(MentoringStatus.승인대기, MentoringStatus.승인)).stream()
+                .allMatch(req -> ((endTime.isBefore(req.getStartTime()) || endTime.equals(req.getStartTime())) ||
                         (startTime.isAfter(req.getEndTime()) || startTime.equals(req.getEndTime()))));
 
         if (conflict) {
