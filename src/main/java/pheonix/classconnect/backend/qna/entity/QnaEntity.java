@@ -58,4 +58,18 @@ public class QnaEntity extends BaseTimeEntity {
         this.answered = true;
     }
 
+    public void removeAnswer() {
+        this.answer = null;
+        this.answerer = null;
+        this.answerDate = null;
+        this.answerTime = null;
+        this.answered = false;
+    }
+
+    public void updateQuestion(String title, String question, Short publishType) {
+        this.title = title;
+        this.question = question;
+        this.publishType = publishType;
+    }
+
 }

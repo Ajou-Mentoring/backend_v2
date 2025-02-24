@@ -3,6 +3,7 @@ package pheonix.classconnect.backend.qna.model;
 
 import lombok.Builder;
 import lombok.Data;
+import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.qna.entity.QnaEntity;
@@ -20,14 +21,14 @@ public class QnaDTO {
         private Long id;                            /*게시물 ID*/
         private String title;                       /*제목*/
         private String question;                    /*질문*/
-        private List<Long> questionImages;          /*질문 이미지 리스트*/
+        private List<File> questionImages;          /*질문 이미지 리스트*/
         private Short publishType;                  /*공개여부*/
         private UserDTO.User questioner;            /*질문자*/
         private LocalDateTime createdAt;            /*등록일*/
         private LocalDateTime updatedAt;            /*등록시간*/
         private boolean answered;                   /*답변여부*/
         private String answer;                      /*답변*/
-        private List<Long> answerImages;            /*질문 이미지 리스트*/
+        private List<File> answerImages;            /*질문 이미지 리스트*/
         private UserDTO.User answerer;              /*답변자*/
         private LocalDateTime answeredAt;           /*답변시간*/
 
@@ -63,6 +64,7 @@ public class QnaDTO {
     @Data
     @Builder
     public static class Answer {
+        private Long id;
         private String answer;
         private List<Long> answerImages;
         private Long answererId;
@@ -104,7 +106,6 @@ public class QnaDTO {
     @Builder
     public static class UpdateQuestion {
         private Long id;            /*Q&A ID*/
-        private Long userId;        /*질문자 ID*/
         private String title;       /*제목*/
         private String question;    /*질문*/
         private Short PublishType;  /*공개여부*/

@@ -23,7 +23,7 @@ public class UserDTO {
         private Set<AuthorityDTO.AuthorityInfo> authorities;
 
         public static User fromEntity(UserEntity entity) {
-            return User.builder()
+            return entity == null ? null : User.builder()
                     .id(entity.getId())
                     .studentNo(entity.getStudentNo())
                     .email(entity.getEmail())
