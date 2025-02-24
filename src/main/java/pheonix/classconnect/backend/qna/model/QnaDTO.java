@@ -90,6 +90,14 @@ public class QnaDTO {
         private List<Long> images;  /*이미지 리스트*/
     }
 
+    // 답변 생성/수정 요청
+    @Data
+    @Builder
+    public static class Request03 {
+        private String answer;    /*질문*/
+        private List<Long> images;  /*이미지 리스트*/
+    }
+
     // 질문 생성 DTO
     @Data
     @Builder
@@ -115,9 +123,13 @@ public class QnaDTO {
     @Data
     @Builder
     public static class QuestionResponse01 {
-        private UserDTO.Response02 user;
+        private Long id;                            /*게시물 ID*/
+        private String title;                       /*제목*/
         private String content;
-        private List<FileResponse> images;
+        private List<FileResponse.Info> images;
+        private boolean isPublic;                     /*공개여부*/
+        private boolean answered;                   /*답변 여부*/
+        private UserDTO.Response02 user;
         private LocalDateTime createdAt;
         private boolean updated;
     }
@@ -134,10 +146,12 @@ public class QnaDTO {
         private Boolean answered;
     }
 
+    @Data
+    @Builder
     public static class AnswerResponse01 {
         private UserDTO.Response02 user;
         private String content;
-        private List<FileResponse> images;
+        private List<FileResponse.Info> images;
         private LocalDateTime createdAt;
         private boolean updated;
     }
@@ -146,10 +160,6 @@ public class QnaDTO {
     @Data
     @Builder
     public static class Response01 {
-        private Long id;                            /*게시물 ID*/
-        private String title;                       /*제목*/
-        private Short isPublic;                     /*공개여부*/
-        private boolean answered;                   /*답변 여부*/
         private QuestionResponse01 question;        /*질문*/
         private AnswerResponse01 answer;            /*답변*/
     }
@@ -161,7 +171,7 @@ public class QnaDTO {
         private Long id;                            /*게시물 ID*/
         private String title;                       /*제목*/
         private UserDTO.Response02 user;            /*질문자*/
-        private Short isPublic;                     /*공개여부*/
+        private boolean isPublic;                     /*공개여부*/
         private boolean answered;                   /*답변 여부*/
         private boolean updated;                    /*수정 여부*/
         private LocalDateTime createdAt;            /*질문 등록일*/
