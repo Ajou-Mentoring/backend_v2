@@ -31,6 +31,7 @@ import pheonix.classconnect.backend.mentoring.repository.MentoringResultReposito
 import pheonix.classconnect.backend.mentoring.repository.ScheduleRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -173,9 +174,13 @@ public class MentoringService {
         LocalTime startTime = request.getStartTime();
         LocalTime endTime = request.getEndTime();
 
-        boolean conflict = !mentoringRequestRepository.findAllByUserAndDateAndStatusIn(mentorId, date, List.of(MentoringStatus.승인대기, MentoringStatus.승인)).stream()
-                .allMatch(req -> ((endTime.isBefore(req.getStartTime()) || endTime.equals(req.getStartTime())) ||
-                        (startTime.isAfter(req.getEndTime()) || startTime.equals(req.getEndTime()))));
+        boolean conflict = !mentoringRequestRepository.findAllByUserAndDateAndStatusIn(mentorId, date, List.of(MentoringStatus.승인)).stream()
+                .allMatch(req -> (
+                        endTime.isBefore(req.getStartTime()) ||
+                        endTime.equals(req.getStartTime()) ||
+                        startTime.isAfter(req.getEndTime()) ||
+                        startTime.equals(req.getEndTime()))
+                );
 
         if (conflict) {
             throw new MainApplicationException(ErrorCode.MENTOR_TIME_CONFLICT, "이미 다른 요청이 승인/대기 중입니다.");
@@ -230,8 +235,9 @@ public class MentoringService {
             throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인 대기 또는 승인 상태인 요청만 거절할 수 있습니다.");
         }
         // 4. 멘토링 요청 거절 가능 기간인지 조회
-        if (Objects.equals(request.getStatus(), MentoringStatus.승인) && LocalDate.now().isAfter(request.getDate().minusDays(2))) {
-            throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 최소 2일 전까지 취소 가능합니다.");
+        if (Objects.equals(request.getStatus(), MentoringStatus.승인) &&
+                LocalDateTime.now().isAfter(LocalDateTime.of(request.getDate(), request.getStartTime()).minusHours(24))) {
+            throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 멘토링 시작 24시간 전까지 취소 가능합니다.");
         }
 
         request.cancel(comment);
@@ -473,9 +479,6 @@ public class MentoringService {
         if (schedules.isEmpty()) return new ArrayList<>();
 
         // TimeSlot 생성
-        for (ScheduleEntity s : schedules) {
-            log.info("{} {} {} {}", s.getStartTime(), s.getEndTime(), s.getId().getDate(), s.getId().getSerNo());
-        }
         List<ScheduleDTO.Schedule> timeSlots = generateTimeSlots(schedules);
 
         // 유저 아이디와 날짜 기준으로 승인대기/승인 상태인 요청 내역을 모두 조회
@@ -601,7 +604,7 @@ public class MentoringService {
             return false;
         }
         // Slot이 request와 겹치는지 확인
-        return !(slot.getEndTime().isBefore(request.getStartTime()) || slot.getStartTime().isAfter(request.getEndTime()));
+        return !(slot.getEndTime().isBefore(request.getStartTime()) || slot.getStartTime().isAfter(request.getEndTime()) || slot.getStartTime().equals(request.getEndTime()));
     }
 
     // 증빙자료 관련 메서드
