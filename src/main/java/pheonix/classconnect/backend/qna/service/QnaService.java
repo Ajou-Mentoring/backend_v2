@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.common.model.Paged;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
@@ -46,6 +45,7 @@ public class QnaService {
                 .question(dto.getContent())
                 .questioner(questioner)
                 .publishType(dto.getPublishType())
+                .answered(false)
                 .build();
 
         Long qnaId = qnaRepository.save(saved).getId();
@@ -69,7 +69,7 @@ public class QnaService {
         }
         // 본처리
         // 질문 생성
-        entity.updateQuestion(dto.getTitle(), dto.getQuestion(), dto.getPublishType());
+        entity.updateQuestion(dto.getTitle(), dto.getContent(), dto.getPublishType());
 
         qnaRepository.save(entity);
 
@@ -78,6 +78,7 @@ public class QnaService {
     }
 
     // 질문 삭제
+    @Transactional
     public void removeQuestion(Long id) {
         log.info("질문 삭제");
 
@@ -165,6 +166,7 @@ public class QnaService {
     }
 
     // 답변 수정 - 이미지 포함, 삭제가 아니면
+    @Transactional
     public void updateAnswer(QnaDTO.Answer dto) {
         log.info("답변 수정");
 
@@ -188,6 +190,7 @@ public class QnaService {
     }
 
     // 답변 삭제
+    @Transactional
     public void deleteAnswer(Long id) {
         log.info("답변 삭제");
 

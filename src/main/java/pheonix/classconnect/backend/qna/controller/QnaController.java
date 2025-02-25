@@ -16,7 +16,6 @@ import pheonix.classconnect.backend.exceptions.MainApplicationException;
 import pheonix.classconnect.backend.qna.constants.PublishType;
 import pheonix.classconnect.backend.qna.model.QnaDTO;
 import pheonix.classconnect.backend.qna.service.QnaService;
-import pheonix.classconnect.backend.security.model.UserDetailDTO;
 import pheonix.classconnect.backend.security.service.PrincipalDetailsService;
 
 import java.util.ArrayList;
@@ -70,7 +69,6 @@ public class QnaController {
                                         .auth(Collections.max(qna.getQuestioner().getAuthorities().stream().map(AuthorityDTO.AuthorityInfo::getCode).toList()))
                                         .build())
                                 .createdAt(qna.getCreatedAt())
-                                .updated(qna.getUpdatedAt() != null && qna.getAnsweredAt() == null)
                                 .build())
                         .toList())
                 .build();
@@ -87,7 +85,7 @@ public class QnaController {
 
         // 비밀 질문은 본인 또는 관리자만 조회 가능
         if (qna.getPublishType() == PublishType.비밀) {
-            if (user == null || (Long.parseLong(user.getUsername()) != qna.getQuestioner().getId() || principalDetailsService.isAdmin(user))) {
+            if (user == null || (Long.parseLong(user.getUsername()) != qna.getQuestioner().getId() && !principalDetailsService.isAdmin(user))) {
                 throw new MainApplicationException(ErrorCode.QNA_UNAUTHORIZED, "비밀 글은 본인 또는 관리자만 조회 가능합니다.");
             }
         }
@@ -122,7 +120,6 @@ public class QnaController {
                         .isPublic(qna.getPublishType() == PublishType.전체)
                         .answered(qna.getAnsweredAt() != null)
                         .createdAt(qna.getCreatedAt())
-                        .updated(qna.getUpdatedAt() == qna.getCreatedAt())
                         .build())
                 .answer(QnaDTO.AnswerResponse01.builder()
                         .content(qna.getAnswer())
@@ -131,7 +128,6 @@ public class QnaController {
                                 .map(FileResponse.Info::fromFile)
                                 .toList())
                         .createdAt(qna.getAnsweredAt())
-                        .updated(qna.getUpdatedAt() != qna.getAnsweredAt())
                         .build())
                 .build();
 
@@ -143,14 +139,49 @@ public class QnaController {
                                          @AuthenticationPrincipal User user) {
         log.info("QnaController.postQuestion()");
 
+        // 요청 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "유저 권한 정보가 없습니다.");
+        }
+        QnaDTO.CreateQuestion dto = QnaDTO.CreateQuestion.builder()
+                .title(req.getTitle())
+                .content(req.getContent())
+                .userId(Long.parseLong(user.getUsername()))
+                .images(req.getImages())
+                .publishType(req.getPublishType())
+                .build();
+
+        qnaService.createQuestion(dto);
+
         return Response.ok(HttpStatus.CREATED, "질문이 등록되었습니다.", null);
     }
 
     @PutMapping("/qna/{id}/question")
     public Response<String> updateQuestion(@PathVariable(name="id") Long qnaId,
-                                           @RequestBody QnaDTO.Response02 req,
+                                           @RequestBody QnaDTO.Request02 req,
                                            @AuthenticationPrincipal User user) {
         log.info("QnaController.postQuestion({})", qnaId);
+
+        // 요청 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "유저 권한 정보가 없습니다.");
+        }
+
+        // 본인이 올린 질문인지 검증
+        QnaDTO.Qna qna = qnaService.getQnaById(qnaId);
+        if (qna.getQuestioner().getId() != Long.parseLong(user.getUsername())) {
+            throw new MainApplicationException(ErrorCode.QNA_UNAUTHORIZED, "질문자만 게시물을 수정할 수 있습니다.");
+        }
+
+        QnaDTO.UpdateQuestion dto = QnaDTO.UpdateQuestion.builder()
+                .id(qnaId)
+                .title(req.getTitle())
+                .content(req.getContent())
+                .images(req.getImages())
+                .publishType(req.getPublishType())
+                .build();
+
+        qnaService.updateQuestion(dto);
 
         return Response.ok(HttpStatus.ACCEPTED, "질문이 수정되었습니다.", null);
     }
@@ -160,28 +191,83 @@ public class QnaController {
                                            @AuthenticationPrincipal User user) {
         log.info("QnaController.deleteQuestion({})", qnaId);
 
+        // 요청 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "유저 권한 정보가 없습니다.");
+        }
+
+        // 본인이 올린 질문인지 검증
+        QnaDTO.Qna qna = qnaService.getQnaById(qnaId);
+        if (qna.getQuestioner().getId() != Long.parseLong(user.getUsername()) && !principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.QNA_UNAUTHORIZED, "질문자만 게시물을 삭제할 수 있습니다.");
+        }
+
+        qnaService.removeQuestion(qnaId);
+
         return Response.ok(HttpStatus.ACCEPTED, "질문이 삭제되었습니다.", null);
     }
 
     @PostMapping("/qna/{id}/answer")
-    public Response<String> putAnswer(@PathVariable(name="id") Long qnaId,
-                                      @RequestBody QnaDTO.Request01 req,
+    public Response<String> postAnswer(@PathVariable(name="id") Long qnaId,
+                                      @RequestBody QnaDTO.Request03 req,
                                       @AuthenticationPrincipal User user) {
-        log.info("QnaController.addAnswer({})", qnaId);
-        int action = 1; // 동작: 1-답변등록 2-답변수정
+        log.info("QnaController.postAnswer({})", qnaId);
 
+        // 요청 검증
+        // 관리자가 아니면 답변을 달 수 없음
+        if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자만 답변을 달 수 있습니다.");
+        }
 
-        return switch (action) {
-            case 1 -> {
-                log.info("답변등록");
-                yield Response.ok(HttpStatus.CREATED, "답변이 등록되었습니다.", null); // 답변 등록
-            }
-            case 2 -> {
-                log.info("답변수정");
-                yield Response.ok(HttpStatus.ACCEPTED, "답변이 수정되었습니다.", null);
-            }
-            default -> Response.error(ErrorCode.BAK_LOGIC_ERROR, "답변을 등록/수정할 수 없는 게시물입니다.");
-        };
+        QnaDTO.Answer dto = QnaDTO.Answer.builder()
+                .id(qnaId)
+                .answer(req.getContent())
+                .answerImages(req.getImages())
+                .answererId(Long.parseLong(user.getUsername()))
+                .build();
 
+        qnaService.createAnswer(dto);
+        
+        return Response.ok(HttpStatus.CREATED, "답변이 등록되었습니다.", null);
+    }
+
+    @PutMapping("/qna/{id}/answer")
+    public Response<String> updateAnswer(@PathVariable(name="id") Long qnaId,
+                                       @RequestBody QnaDTO.Request03 req,
+                                       @AuthenticationPrincipal User user) {
+        log.info("QnaController.updateAnswer({})", qnaId);
+
+        // 요청 검증
+        // 관리자가 아니면 답변을 수정할 수 없음
+        if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자만 답변을 수정할 수 있습니다.");
+        }
+
+        QnaDTO.Answer dto = QnaDTO.Answer.builder()
+                .id(qnaId)
+                .answer(req.getContent())
+                .answerImages(req.getImages())
+                .answererId(Long.parseLong(user.getUsername()))
+                .build();
+
+        qnaService.updateAnswer(dto);
+        
+        return Response.ok(HttpStatus.ACCEPTED, "답변이 수정되었습니다.", null);
+    }
+
+    @DeleteMapping("/qna/{id}/answer")
+    public Response<String> deleteAnswer(@PathVariable(name="id") Long qnaId,
+                                         @AuthenticationPrincipal User user) {
+        log.info("QnaController.deleteAnswer({})", qnaId);
+
+        // 요청 검증
+        // 관리자가 아니면 답변을 삭제할 수 없음
+        if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자만 답변을 삭제할 수 있습니다.");
+        }
+
+        qnaService.deleteAnswer(qnaId);
+
+        return Response.ok(HttpStatus.ACCEPTED, "답변이 삭제되었습니다.", null);
     }
 }
