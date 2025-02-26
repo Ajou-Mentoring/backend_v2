@@ -107,4 +107,15 @@ public class UserDTO {
         private Short courseRole;
         private Integer count;
     }
+
+    @Data
+    @Builder
+    public static class Response05 {
+        private Long id;
+        private String name;
+        private String email;
+        private String studentNo;
+        private String department;
+        private Short auth;
+    }
 }

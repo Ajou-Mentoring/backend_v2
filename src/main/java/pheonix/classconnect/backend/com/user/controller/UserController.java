@@ -12,6 +12,7 @@ import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.auth.model.AuthorityDTO;
+import pheonix.classconnect.backend.com.common.model.Paged;
 import pheonix.classconnect.backend.com.common.model.Response;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.service.UserService;
@@ -59,6 +60,61 @@ public class UserController {
         res.setProfile(profileImg);
 
         return Response.ok(HttpStatus.OK, "프로필을 조회했습니다.", res);
+    }
+
+    @GetMapping("/users")
+    public Response<Paged<UserDTO.Response05>> getUserPage(@RequestParam(value = "searchBy", required = false) String searchBy,
+                                                            @RequestParam(value = "clue", required = false) String clue,
+                                                            @RequestParam(value = "page", defaultValue = "0", required = false) int page,
+                                                            @RequestParam(value = "page", defaultValue = "20", required = false) int size,
+                                                            @AuthenticationPrincipal User user) {
+        log.info("UserController.getUserPage({}, {}, {}, {})", searchBy, clue, page, size);
+
+        // 요청 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "사용자 권한 정보가 없습니다.");
+        }
+
+        Paged<UserDTO.User> users;
+        // 전체 조회
+        if (searchBy == null && clue == null) {
+            users = userService.findUsers(page, size);
+        }
+        // 이름으로 조회
+        else if (searchBy != null && clue != null && !clue.isBlank() && searchBy.equalsIgnoreCase("name")) {
+            users = userService.findUsersByName(clue, page, size);
+        }
+        // 학번으로 조회
+        else if (searchBy != null && clue != null && !clue.isBlank() && searchBy.equalsIgnoreCase("studentNo")) {
+            users = userService.findUsersByStudentNo(clue, page, size);
+        }
+        else {
+            throw new MainApplicationException(ErrorCode.USER_BAD_REQUEST, "지원하지 않는 조회 구분입니다.");
+        }
+
+        // 응답 SET
+        Paged<UserDTO.Response05> res = Paged.<UserDTO.Response05>builder()
+                .currentPage(users.getCurrentPage())
+                .numberOfElements(users.getNumberOfElements())
+                .size(users.getSize())
+                .totalPages(users.getTotalPages())
+                .totalElements(users.getTotalElements())
+                .items(users.getItems().stream()
+                        .map(usr -> UserDTO.Response05.builder()
+                                .id(usr.getId())
+                                .name(usr.getName())
+                                .email(usr.getEmail())
+                                .studentNo(usr.getStudentNo())
+                                .department(usr.getDepartment().getName())
+                                .auth(usr.getAuthorities().stream()
+                                        .map(AuthorityDTO.AuthorityInfo::getCode)
+                                        .max(Short::compare)
+                                        .orElse((short) 0))
+                                .build())
+                        .toList())
+                .build();
+
+        return Response.ok(HttpStatus.OK, "사용자 페이지를 조회했습니다.", res);
     }
 
 //    // 회원가입
