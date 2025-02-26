@@ -176,7 +176,13 @@ public class CourseController {
         // 코스 정보 세팅
         CourseResponse response = CourseResponse.fromCourse(courseService.getACourseById(courseId));
         // 코스 이미지 정보 세팅
-        response.setImage(FileResponse.Info.fromFile(fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId).getFirst()));
+        List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId);
+        if (images.isEmpty()) {
+            response.setImage(null);
+        } else {
+            response.setImage(FileResponse.Info.fromFile(images.getLast()));
+        }
+        //response.setImage(FileResponse.Info.fromFile(fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId).getFirst()));
         // 코스 역할 세팅
         response.setRole(courseMemberService.findMemberRoleInClass(Long.parseLong(user.getUsername()), courseId));
 
