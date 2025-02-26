@@ -324,10 +324,9 @@ public class CourseController {
     @DeleteMapping("/courses/{courseId}/members/{memberId}")
     public Response<List<UserDTO.Response01>> removeMember(@PathVariable(value = "courseId") Long courseId,
                                                            @PathVariable(value = "memberId") Long memberId,
-                                                           @RequestParam(value = "role") Short role,
                                                            @AuthenticationPrincipal User user
     ) {
-        log.info("CourseController.removeMember({}, {}, {})", courseId, memberId, role);
+        log.info("CourseController.removeMember({}, {})", courseId, memberId);
 
         if (!principalDetailsService.isAdmin(user)) {
             throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자 권한만 멤버를 추방할 수 있습니다.");
