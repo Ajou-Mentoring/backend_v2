@@ -51,7 +51,7 @@ public class CourseController {
      * @return Response
      */
     @PostMapping(value = "/courses")
-    public Response<String> create(@ModelAttribute @Valid CourseCreateRequestDTO request,
+    public Response<String> create(@RequestBody @Valid CourseCreateRequestDTO request,
                            @AuthenticationPrincipal User user
                            ) {
 
