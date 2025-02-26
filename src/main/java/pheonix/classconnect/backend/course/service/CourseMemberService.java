@@ -89,7 +89,7 @@ public class CourseMemberService {
 
     public void excludeMemberFromCourse(Long courseId, Long userId) {
         // 입력값 검증
-        CourseMemberEntity member = courseMemberEntityRepository.findByUserIdAndCourseId(courseId, userId)
+        CourseMemberEntity member = courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, String.format("멤버를 찾을 수 없습니니다. 코스 : [%d]  유저 : [%d]", courseId, userId)));
 
         courseMemberEntityRepository.delete(member);
