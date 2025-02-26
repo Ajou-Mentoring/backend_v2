@@ -65,10 +65,13 @@ public class CourseService {
         CourseEntity saved = courseEntityRepository.save(course);
 
         // 이미지가 존재한다면 매핑
-        File courseImage = fileStorage.getFileById(imageId);
-        if (courseImage != null) {
-            fileStorage.mapFileToDomain(imageId, AttachmentDomainType.COURSE, saved.getId());
+        if (imageId != null) {
+            File courseImage = fileStorage.getFileById(imageId);
+            if (courseImage != null) {
+                fileStorage.mapFileToDomain(imageId, AttachmentDomainType.COURSE, saved.getId());
+            }
         }
+
     }
 
     @Transactional
