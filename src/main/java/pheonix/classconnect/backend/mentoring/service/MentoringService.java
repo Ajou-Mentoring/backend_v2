@@ -695,8 +695,8 @@ public class MentoringService {
                             resultDTO.getDate(),
                             resultDTO.getTime(),
                             resultDTO.getLength(),
-                            result.getLocation(),
-                            result.getContent(),
+                            resultDTO.getLocation(),
+                            resultDTO.getContent(),
                             resultDTO.getMentees()
                     );
 
