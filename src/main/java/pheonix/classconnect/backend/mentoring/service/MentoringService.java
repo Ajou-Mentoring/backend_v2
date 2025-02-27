@@ -712,10 +712,13 @@ public class MentoringService {
                         .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, "증빙자료를 찾을 수 없습니다."));
 
                 MentoringRequestEntity request = mentoringRequestRepository.findById(result.getRequest().getId())
-                        .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, "멘토링 신청 내역을 찾을 수 없습니다."));
+                        .orElse(null);
 
-                request.setRegistered(false);
-                mentoringRequestRepository.save(request);
+                // 신청내역이 있을 경우 작성 여부를 false로 변경
+                if (request != null) {
+                    request.setRegistered(false);
+                    mentoringRequestRepository.save(request);
+                }
 
                 // 이미지 파일 삭제
                 fileStorage.deleteAllFilesIn(AttachmentDomainType.MENTORING_RESULT, resultDTO.getId());
