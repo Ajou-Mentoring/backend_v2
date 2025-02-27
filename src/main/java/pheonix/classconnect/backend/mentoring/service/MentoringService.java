@@ -9,10 +9,12 @@ import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainTyp
 import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
+import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
 import pheonix.classconnect.backend.course.constants.CourseRole;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
 import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
+import pheonix.classconnect.backend.course.model.CourseDTO;
 import pheonix.classconnect.backend.course.repository.CourseEntityRepository;
 import pheonix.classconnect.backend.course.repository.CourseMemberEntityRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
@@ -52,6 +54,7 @@ public class MentoringService {
     private static final int 멘토ID기준월별조회 = 1;
     private static final int 신청자ID기준월별조회 = 2;
     private static final int 멘티ID기준월별조회 = 3;
+    private static final int 멘티ID기준전체조회 = 4;
 
     public void createRequest(MentoringRequestDTO.Create dto) {
         log.info("멘토링 요청 생성");
@@ -261,6 +264,9 @@ public class MentoringService {
         else if (mentorId == null && requesterId == null && menteeId != null && courseId != null && year > 0 && month > 0) {
             searchType = 멘티ID기준월별조회;
         }
+        else if (mentorId == null && requesterId == null && menteeId != null && courseId == null && year == 0 && month == 0) {
+            searchType = 멘티ID기준전체조회;
+        }
 
         // searchType 별 조회
         List<MentoringRequestEntity> requests;
@@ -292,6 +298,17 @@ public class MentoringService {
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
 
                 requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatus(courseId, from, to, MentoringStatus.승인).stream()
+                        .filter(req -> req.getMentees().containsKey(mentee.getStudentNo()))
+                        .toList();
+                break;
+            }
+            case 멘티ID기준전체조회: {
+                log.info("멘티 기준 전체 조회 - 멘티 ID = [{}]", menteeId);
+                // 멘티가 서비스에 가입되지 않은 경우 UserNotFound 에러 발생
+                UserEntity mentee = userRepository.findById(menteeId)
+                        .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보를 찾을 수 없습니다."));
+
+                requests = mentoringRequestRepository.findAll().stream()
                         .filter(req -> req.getMentees().containsKey(mentee.getStudentNo()))
                         .toList();
                 break;
@@ -607,9 +624,16 @@ public class MentoringService {
         log.info("멘토링 증빙자료 조회 - course: {} mentor: {} month: {}", courseId, mentorId, month);
         List<MentoringResultDTO.MentoringResult> mentoringResults = new ArrayList<>();
         try {
-            LocalDate start = LocalDate.of(year, month, 1);
-            LocalDate end = LocalDate.of(year, month+1, 1).minusDays(1);
-            List<MentoringResultEntity> mentoringLogEntityList = mentoringResultRepository.findAllByCourseIdAndMentorIdAndDateBetweenOrderByDateAscTimeAsc(courseId, mentorId, start, end);
+            List<MentoringResultEntity> mentoringLogEntityList;
+            if (year == 0 && month == 0) {
+                mentoringLogEntityList = mentoringResultRepository.findAllByMentorIdOrderByDateAscTimeAsc(mentorId);
+            }
+            else {
+                LocalDate start = LocalDate.of(year, month, 1);
+                LocalDate end = LocalDate.of(year, month+1, 1).minusDays(1);
+                mentoringLogEntityList = mentoringResultRepository.findAllByCourseIdAndMentorIdAndDateBetweenOrderByDateAscTimeAsc(courseId, mentorId, start, end);
+            }
+
             if (!mentoringLogEntityList.isEmpty()) {
                 for (MentoringResultEntity result : mentoringLogEntityList) {
                     MentoringResultDTO.MentoringResult dto = MentoringResultDTO.MentoringResult.fromEntity(result);
@@ -703,6 +727,32 @@ public class MentoringService {
         }
     }
 
+    public MentoringResultDTO.MentoringResult getResult(Long id) {
+        log.info("증빙자료 조회 : [{}]", id);
+
+        MentoringResultEntity result = mentoringResultRepository.findById(id)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, String.format("증빙자료를 찾을 수 없습니다. [%d]", id)));
+
+        MentoringResultDTO.MentoringResult dto =  MentoringResultDTO.MentoringResult.builder()
+                .id(result.getId())
+                .mentor(UserDTO.User.fromEntity(result.getMentor()))
+                .length(result.getLength())
+                .course(CourseDTO.Course.fromEntity(result.getCourse()))
+                .date(result.getDate())
+                .time(result.getTime())
+                .content(result.getContent())
+                .mentees(result.getMentees())
+                .location(result.getLocation())
+                .build();
+
+        // 이미지가 있을 경우 이미지 추가
+        List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.MENTORING_RESULT, id);
+
+        dto.setImages(images);
+
+        return dto;
+    }
+
     @Transactional
     public void createLog(MentoringResultDTO.Create dto) {
         log.info("증빙자료 생성");
@@ -745,16 +795,6 @@ public class MentoringService {
             }
         }
     }
-
-//    @Override
-//    public MentoringLog updateLog(MentoringLog updatedLog) {
-//        log.info("멘토링 증빙자료 수정 : {} ", updatedLog.getId());
-//        MentoringResultEntity updated = mentoringResultRepository.findById(updatedLog.getId()).orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_NOT_FOUND, "MentoringLog Not Found"));
-//
-//        updated.updateMentoringLogDetails(updatedLog);
-//
-//        return MentoringLog.fromEntity(mentoringResultRepository.save(updated));
-//    }
 
     public void deleteLog(Long logId) {
         log.info("멘토링 증빙자료 삭제 : {}", logId);

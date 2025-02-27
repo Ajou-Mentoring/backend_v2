@@ -66,7 +66,7 @@ public class UserController {
     public Response<Paged<UserDTO.Response05>> getUserPage(@RequestParam(value = "searchBy", required = false) String searchBy,
                                                             @RequestParam(value = "clue", required = false) String clue,
                                                             @RequestParam(value = "page", defaultValue = "0", required = false) int page,
-                                                            @RequestParam(value = "page", defaultValue = "20", required = false) int size,
+                                                            @RequestParam(value = "size", defaultValue = "20", required = false) int size,
                                                             @AuthenticationPrincipal User user) {
         log.info("UserController.getUserPage({}, {}, {}, {})", searchBy, clue, page, size);
 

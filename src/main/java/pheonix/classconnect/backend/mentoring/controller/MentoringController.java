@@ -98,8 +98,8 @@ public class MentoringController {
     // 월별 멘토링 신청 내역 조회
     @GetMapping("/courses/{courseId}/requests")
     public Response<List<MentoringRequestDTO.Response01>> getMentoringRequests(@PathVariable(value = "courseId") Long courseId,
-                                                                               @RequestParam(value = "year") int year,
-                                                                               @RequestParam(value = "month") int month,
+                                                                               @RequestParam(value = "year", defaultValue = "0") int year,
+                                                                               @RequestParam(value = "month", defaultValue = "0") int month,
                                                                                @RequestParam(value = "mentor", required = false) Long mentorId,
                                                                                @RequestParam(value = "requester", required = false) Long requesterId,
                                                                                @RequestParam(value = "mentee", required = false) Long menteeId,
@@ -299,8 +299,8 @@ public class MentoringController {
     @GetMapping("/courses/{courseId}/members/{memberId}/stats")
     public Response<List<UserDTO.Response04>> getMembersStats(@PathVariable(value = "courseId") Long courseId,
                                                               @PathVariable(value = "memberId") Long memberId,
-                                                              @RequestParam(value = "year", defaultValue = "0") int year,
-                                                              @RequestParam(value = "month", defaultValue = "0") int month,
+                                                              @RequestParam(value = "year", defaultValue = "2025") int year,
+                                                              @RequestParam(value = "month", defaultValue = "3") int month,
                                                               @RequestParam(value = "groupBy") String groupBy,
                                                               @AuthenticationPrincipal User user)
     {
@@ -395,8 +395,8 @@ public class MentoringController {
     @GetMapping("/courses/{courseId}/results")
     public Response<List<MentoringResultDTO.Response01>> getMentoringResults(@PathVariable(value = "courseId") Long courseId,
                                                                              @RequestParam(value = "mentorId") Long mentorId,
-                                                                             @RequestParam(value = "year", defaultValue = "2025") int year,
-                                                                             @RequestParam(value = "month", defaultValue = "3") int month,
+                                                                             @RequestParam(value = "year", defaultValue = "0") int year,
+                                                                             @RequestParam(value = "month", defaultValue = "0") int month,
                                                                              @AuthenticationPrincipal User user) {
         log.info("MentoringController.getMentoringResults({}, {}, {}, {})", courseId, mentorId, year, month);
 
@@ -516,5 +516,47 @@ public class MentoringController {
         mentoringService.patchMentoringLogs(courseId, Long.parseLong(user.getUsername()), dtoList);
 
         return Response.ok(HttpStatus.ACCEPTED, "증빙자료를 수정했습니다.", null);
+    }
+
+    // 증빙자료 조회
+    @GetMapping("/courses/{courseId}/results/{resultId}")
+    public Response<MentoringResultDTO.Response02> getMentoringResult(@PathVariable(value = "courseId") Long courseId,
+                                                                      @PathVariable(value = "resultId") Long resultId,
+                                                                      @AuthenticationPrincipal User user) {
+        log.info("MentoringController.getMentoringResult({}, {})", courseId, resultId);
+
+        // 요청 검증
+        if (courseId == null)
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID는 필수 값입니다.");
+        if (resultId == null)
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "신청 ID는 필수 값입니다.");
+
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "유저 권한 정보가 없습니다.");
+        }
+
+
+        MentoringResultDTO.MentoringResult result = mentoringService.getResult(resultId);
+
+        List<MentoringResultDTO.Mentee> mentees = new ArrayList<>();
+        mentees = result.getMentees().entrySet().stream()
+                .map(mentee -> MentoringResultDTO.Mentee.builder()
+                        .studentNo(mentee.getKey())
+                        .name(mentee.getValue().toString())
+                        .build())
+                .toList();
+
+        MentoringResultDTO.Response02 res = MentoringResultDTO.Response02.builder()
+                .id(result.getId())
+                .date(result.getDate())
+                .time(result.getTime())
+                .duration(result.getLength())
+                .content(result.getContent())
+                .location(result.getLocation())
+                .mentees(mentees)
+                .build();
+
+
+        return Response.ok(HttpStatus.OK, "증빙자료 리스트를 조회했습니다.", res);
     }
 }
