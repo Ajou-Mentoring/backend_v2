@@ -519,15 +519,12 @@ public class MentoringController {
     }
 
     // 증빙자료 조회
-    @GetMapping("/courses/{courseId}/results/{resultId}")
-    public Response<MentoringResultDTO.Response02> getMentoringResult(@PathVariable(value = "courseId") Long courseId,
-                                                                      @PathVariable(value = "resultId") Long resultId,
+    @GetMapping("/results/{resultId}")
+    public Response<MentoringResultDTO.Response02> getMentoringResult(@PathVariable(value = "resultId") Long resultId,
                                                                       @AuthenticationPrincipal User user) {
-        log.info("MentoringController.getMentoringResult({}, {})", courseId, resultId);
+        log.info("MentoringController.getMentoringResult({})", resultId);
 
         // 요청 검증
-        if (courseId == null)
-            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID는 필수 값입니다.");
         if (resultId == null)
             throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "신청 ID는 필수 값입니다.");
 
@@ -538,8 +535,7 @@ public class MentoringController {
 
         MentoringResultDTO.MentoringResult result = mentoringService.getResult(resultId);
 
-        List<MentoringResultDTO.Mentee> mentees = new ArrayList<>();
-        mentees = result.getMentees().entrySet().stream()
+        List<MentoringResultDTO.Mentee> mentees = result.getMentees().entrySet().stream()
                 .map(mentee -> MentoringResultDTO.Mentee.builder()
                         .studentNo(mentee.getKey())
                         .name(mentee.getValue().toString())
