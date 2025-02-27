@@ -552,6 +552,10 @@ public class MentoringController {
                 .mentees(mentees)
                 .build();
 
+        res.setImages(result.getImages().stream()
+                .map(FileResponse.Info::fromFile)
+                .toList());
+
 
         return Response.ok(HttpStatus.OK, "증빙자료 리스트를 조회했습니다.", res);
     }
