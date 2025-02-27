@@ -163,4 +163,18 @@ public class MentoringResultDTO {
         private List<FileResponse.Info> images;
         private Integer action; // 0 : None, 1 : create/update, -1 : delete
     }
+
+    // 상세 응답 (관리자용)
+    @Data
+    @Builder
+    public static class Response02 {
+        private Long id;
+        private LocalDate date;
+        private LocalTime time;
+        private Integer duration;
+        private String location;
+        private String content;
+        private List<Mentee> mentees;
+        private List<FileResponse.Info> images;
+    }
 }
