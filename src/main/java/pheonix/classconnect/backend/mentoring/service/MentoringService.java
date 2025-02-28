@@ -264,7 +264,7 @@ public class MentoringService {
         else if (mentorId == null && requesterId == null && menteeId != null && courseId != null && year > 0 && month > 0) {
             searchType = 멘티ID기준월별조회;
         }
-        else if (mentorId == null && requesterId == null && menteeId != null && courseId == null && year == 0 && month == 0) {
+        else if (mentorId == null && requesterId == null && menteeId != null && courseId != null && courseId.intValue() == 0 && year == 0 && month == 0) {
             searchType = 멘티ID기준전체조회;
         }
 
@@ -625,10 +625,12 @@ public class MentoringService {
         List<MentoringResultDTO.MentoringResult> mentoringResults = new ArrayList<>();
         try {
             List<MentoringResultEntity> mentoringLogEntityList;
-            if (year == 0 && month == 0) {
+            if (courseId.intValue() == 0 && year == 0 && month == 0) {
+                log.info("멘토별 증빙자료 전체 조회");
                 mentoringLogEntityList = mentoringResultRepository.findAllByMentorIdOrderByDateAscTimeAsc(mentorId);
             }
             else {
+                log.info("멘토별 월별 증빙자료 전체 조회");
                 LocalDate start = LocalDate.of(year, month, 1);
                 LocalDate end = LocalDate.of(year, month+1, 1).minusDays(1);
                 mentoringLogEntityList = mentoringResultRepository.findAllByCourseIdAndMentorIdAndDateBetweenOrderByDateAscTimeAsc(courseId, mentorId, start, end);
@@ -643,7 +645,7 @@ public class MentoringService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new MainApplicationException(ErrorCode.SYS_INTERNAL_SERVER_ERROR, "증빙자료 리스트를 가져오는 도중 에러가 발생했습니다.");
         }
         return mentoringResults;
     }

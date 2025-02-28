@@ -110,10 +110,19 @@ public class MentoringController {
         if (user == null) {
             throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "권한 정보가 없습니다.");
         }
-        // 관리자 또는 코스 멤버가 아니라면 조회 권한 없음
-        if (!courseMemberService.isCourseMember(courseId, Long.parseLong(user.getUsername())) && !principalDetailsService.isAdmin(user) ) {
-            throw new MainApplicationException(ErrorCode.MENTOR_UNAUTHORIZED, "코스 멤버 또는 관리자만 접근 가능한 요청입니다.");
+        // courseId == 0이라면 전체 코스 조회이기 때문에 관리자만 조회 가능함
+        if (courseId.intValue() == 0) {
+            if (!principalDetailsService.isAdmin(user)) {
+                throw new MainApplicationException(ErrorCode.MENTOR_UNAUTHORIZED, "관리자만 접근 가능한 요청입니다.");
+            }
         }
+        // 관리자 또는 코스 멤버가 아니라면 조회 권한 없음
+        else {
+            if (!courseMemberService.isCourseMember(courseId, Long.parseLong(user.getUsername())) && !principalDetailsService.isAdmin(user) ) {
+                throw new MainApplicationException(ErrorCode.MENTOR_UNAUTHORIZED, "코스 멤버 또는 관리자만 접근 가능한 요청입니다.");
+            }
+        }
+
 
         List<MentoringRequestDTO.Response01> res = mentoringService.getMentoringRequests(mentorId, requesterId, menteeId, courseId, year, month).stream()
                 .map(request -> MentoringRequestDTO.Response01.builder()
@@ -404,7 +413,7 @@ public class MentoringController {
         if (courseId == null)
             throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID는 필수 값입니다.");
         if (mentorId == null)
-            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID는 필수 값입니다.");
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "멘토 ID는 필수 값입니다.");
 
         if (user == null || (!principalDetailsService.isAdmin(user)) && (Long.parseLong(user.getUsername()) != mentorId)) {
             throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "요청 권한이 없습니다.");
