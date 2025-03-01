@@ -10,6 +10,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import pheonix.classconnect.backend.com.auth.entity.AuthorityEntity;
 import pheonix.classconnect.backend.com.common.entity.BaseTimeEntity;
 import pheonix.classconnect.backend.com.department.entity.DepartmentEntity;
+import pheonix.classconnect.backend.notification.entity.NotificationEntity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -55,6 +56,14 @@ public class UserEntity extends BaseTimeEntity {
             }
     )
     Set<AuthorityEntity> authorities;
+
+
+//    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+//    private NotificationSettingEntity notificationSetting = new NotificationSettingEntity(this);
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<NotificationEntity> notifications = new ArrayList<>();
 
     public void updateDepartment(DepartmentEntity department) {
         this.department = department;

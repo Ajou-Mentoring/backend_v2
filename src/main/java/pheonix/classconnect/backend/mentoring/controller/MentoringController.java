@@ -292,10 +292,11 @@ public class MentoringController {
         else if (req.getAction() == 3) {
             // 멘토링 취소는 신청자만 가능
             MentoringRequestDTO.MentoringRequest request = mentoringService.getMentoringRequest(requestId);
-            if (Long.parseLong(user.getUsername()) != request.getRequester().getId()) {
+            Long usrId = Long.parseLong(user.getUsername());
+            if (!(usrId.equals(request.getRequester().getId()) || usrId.equals(request.getMentor().getId()))) {
                 throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_FORBIDDEN_REQUEST, "취소 권한이 없습니다.");
             }
-            mentoringService.cancelRequest(requestId, req.getComment());
+            mentoringService.cancelRequest(requestId, courseId, req.getComment(), usrId);
 
             return Response.ok(HttpStatus.ACCEPTED, "멘토링 신청을 취소하였습니다.", null);
         }

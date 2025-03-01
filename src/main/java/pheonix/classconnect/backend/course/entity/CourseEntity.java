@@ -2,10 +2,14 @@ package pheonix.classconnect.backend.course.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import pheonix.classconnect.backend.com.common.entity.BaseTimeEntity;
+import pheonix.classconnect.backend.notification.entity.NotificationEntity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name= "Course")
@@ -46,9 +50,9 @@ public class CourseEntity extends BaseTimeEntity {
 //    @OnDelete(action = OnDeleteAction.CASCADE)
 //    private List<MentoringEntity> mentorings = new ArrayList<>();
 
-//    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
-//    @OnDelete(action = OnDeleteAction.CASCADE)
-//    private List<NotificationEntity> notifications = new ArrayList<>();
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<NotificationEntity> notifications = new ArrayList<>();
 
     public void updateMemberCode(String code) {
         this.memberCode = code;
