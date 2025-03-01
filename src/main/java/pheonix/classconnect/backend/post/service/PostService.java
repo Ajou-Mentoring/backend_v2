@@ -7,7 +7,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
 import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
@@ -103,7 +102,7 @@ public class PostService {
                 )
         );
 
-        Page<PostEntity> posts = postRepository.findAllByPostTypeLessThanEqualAndUploadStatusLessThanAndPublishTypeLessThanEqual(postType, uploadStatus, publishType, pageable);
+        Page<PostEntity> posts = postRepository.findAllByPostTypeLessThanEqualAndUploadStatusLessThanEqualAndPublishTypeLessThanEqual(postType, uploadStatus, publishType, pageable);
 
         return Paged.<PostDTO.Post>builder()
                 .currentPage(posts.getNumber())

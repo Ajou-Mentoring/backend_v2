@@ -284,14 +284,14 @@ public class MentoringService {
                 log.info("멘토 기준 월별 조회 - 멘토 ID = [{}]", mentorId);
                 LocalDate from = LocalDate.of(year, month, 1);
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
-                requests = mentoringRequestRepository.findAllByMentorIdAndCourseIdAndDateBetween(mentorId, courseId, from, to);
+                requests = mentoringRequestRepository.findAllByMentorIdAndCourseIdAndDateBetweenOrderByDateAscStartTimeAsc(mentorId, courseId, from, to);
                 break;
             }
             case 신청자ID기준월별조회: {
                 log.info("신청자 기준 월별 조회 - 신청자 ID = [{}]", requesterId);
                 LocalDate from = LocalDate.of(year, month, 1);
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
-                requests = mentoringRequestRepository.findAllByRequesterIdAndCourseIdAndDateBetween(requesterId, courseId, from, to);
+                requests = mentoringRequestRepository.findAllByRequesterIdAndCourseIdAndDateBetweenOrderByDateAscStartTimeAsc(requesterId, courseId, from, to);
                 break;
             }
             case 멘티ID기준월별조회: {
@@ -306,7 +306,7 @@ public class MentoringService {
                 LocalDate from = LocalDate.of(year, month, 1);
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
 
-                requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatus(courseId, from, to, MentoringStatus.승인).stream()
+                requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatusOrderByDateAscStartTimeAsc(courseId, from, to, MentoringStatus.승인).stream()
                         .filter(req -> req.getMentees().containsKey(mentee.getStudentNo()))
                         .toList();
                 break;
@@ -391,7 +391,7 @@ public class MentoringService {
                 LocalDate from = LocalDate.of(year, month, 1);
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
 
-                List<MentoringRequestEntity> requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatus(courseId, from, to, MentoringStatus.승인);
+                List<MentoringRequestEntity> requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatusOrderByDateAscStartTimeAsc(courseId, from, to, MentoringStatus.승인);
 
                 // 멘티별 멘토링 개수 count
                 if (!requests.isEmpty()) {

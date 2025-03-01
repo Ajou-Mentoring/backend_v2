@@ -41,21 +41,34 @@ public class ScheduleService {
             return duplicated;
         }
 
-        // 스케줄 객체 구축
-        List<ScheduleDTO.Schedule> requestedSchedules = generateSchedule(timeTable);
-
-        for (ScheduleDTO.Schedule requestedSchedule : requestedSchedules) {
-            for (ScheduleEntity savedSchedule : savedSchedules) {
-                ScheduleDTO.Schedule requested = requestedSchedule;
-                ScheduleDTO.Schedule saved = ScheduleDTO.Schedule.fromEntity(savedSchedule);
-
-                // 충돌된 일정이 있다면 해당 스케줄을 충돌리스트에 추가한다.
-                if (isDuplicated(requested, saved)) {
-                    duplicated.add(saved);
-                    break;
-                }
+        // 2025-03-01 변경 : savedSchedule이 timeTable의 시작일자와 종료일자 내에 존재한다면 무조건 충돌
+        for (ScheduleEntity savedSchedule : savedSchedules) {
+            if (savedSchedule.getId().getDate().isEqual(timeTable.getStartDate())) {
+                duplicated.add(ScheduleDTO.Schedule.fromEntity(savedSchedule));
+            }
+            else if (savedSchedule.getId().getDate().isAfter(timeTable.getStartDate()) && savedSchedule.getId().getDate().isBefore(timeTable.getEndDate())) {
+                duplicated.add(ScheduleDTO.Schedule.fromEntity(savedSchedule));
+            }
+            else if (savedSchedule.getId().getDate().isEqual(timeTable.getEndDate())) {
+                duplicated.add(ScheduleDTO.Schedule.fromEntity(savedSchedule));
             }
         }
+
+        // 스케줄 객체 구축
+//        List<ScheduleDTO.Schedule> requestedSchedules = generateSchedule(timeTable);
+//
+//        for (ScheduleDTO.Schedule requestedSchedule : requestedSchedules) {
+//            for (ScheduleEntity savedSchedule : savedSchedules) {
+//                ScheduleDTO.Schedule requested = requestedSchedule;
+//                ScheduleDTO.Schedule saved = ScheduleDTO.Schedule.fromEntity(savedSchedule);
+//
+//                // 충돌된 일정이 있다면 해당 스케줄을 충돌리스트에 추가한다.
+//                if (isDuplicated(requested, saved)) {
+//                    duplicated.add(saved);
+//                    break;
+//                }
+//            }
+//        }
 //        while (idxA < requestedSchedules.size() && idxB < savedSchedules.size()) {
 //            ScheduleDTO.Schedule requested = requestedSchedules.get(idxA);
 //            ScheduleDTO.Schedule saved = ScheduleDTO.Schedule.fromEntity(savedSchedules.get(idxB));
