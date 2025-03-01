@@ -1,4 +1,4 @@
-package pheonix.classconnect.backend.notification.constants;
+package pheonix.classconnect.backend.aop.notification.enums;
 
 public enum NotificationDomain {
     COURSE(0),
@@ -6,7 +6,7 @@ public enum NotificationDomain {
     MESSAGE(2),
     MENTORING(3),
 
-    COMMENT(4), QNA(5);
+    COMMENT(4);
 
     private final int code;
 

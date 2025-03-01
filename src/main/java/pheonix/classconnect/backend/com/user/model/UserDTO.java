@@ -23,7 +23,7 @@ public class UserDTO {
         private Set<AuthorityDTO.AuthorityInfo> authorities;
 
         public static User fromEntity(UserEntity entity) {
-            return User.builder()
+            return entity == null ? null : User.builder()
                     .id(entity.getId())
                     .studentNo(entity.getStudentNo())
                     .email(entity.getEmail())
@@ -106,5 +106,16 @@ public class UserDTO {
         private String studentNo;
         private Short courseRole;
         private Integer count;
+    }
+
+    @Data
+    @Builder
+    public static class Response05 {
+        private Long id;
+        private String name;
+        private String email;
+        private String studentNo;
+        private String department;
+        private Short auth;
     }
 }

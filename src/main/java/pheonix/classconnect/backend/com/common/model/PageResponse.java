@@ -18,7 +18,7 @@ public class PageResponse<T> {
     private List<T> items;
     private boolean hasNext;
 
-    private Integer nextCursorId;
+    private Long nextCursorId;
 
     private CursorType type = CursorType.NORMAL;
 }

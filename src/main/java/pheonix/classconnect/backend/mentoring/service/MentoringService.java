@@ -1,5 +1,6 @@
 package pheonix.classconnect.backend.mentoring.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,10 +10,12 @@ import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainTyp
 import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
+import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
 import pheonix.classconnect.backend.course.constants.CourseRole;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
 import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
+import pheonix.classconnect.backend.course.model.CourseDTO;
 import pheonix.classconnect.backend.course.repository.CourseEntityRepository;
 import pheonix.classconnect.backend.course.repository.CourseMemberEntityRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
@@ -30,6 +33,7 @@ import pheonix.classconnect.backend.mentoring.repository.MentoringResultReposito
 import pheonix.classconnect.backend.mentoring.repository.ScheduleRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,9 +55,12 @@ public class MentoringService {
     private static final int 멘토ID기준월별조회 = 1;
     private static final int 신청자ID기준월별조회 = 2;
     private static final int 멘티ID기준월별조회 = 3;
+    private static final int 멘티ID기준전체조회 = 4;
 
+    @Transactional
     public void createRequest(MentoringRequestDTO.Create dto) {
         log.info("멘토링 요청 생성");
+
 
         // 요청 검증
         if (dto.getSite() != MentoringSite.ONLINE && dto.getSite() != MentoringSite.OFFLINE) {
@@ -148,13 +155,13 @@ public class MentoringService {
         }
     }
 
+    @Transactional
     public void acceptRequest(Long requestId, String comment) {
         log.info("멘토링 요청 수락 : [{}]", requestId);
 
         // 요청 검증
         // 1. 존재하는 요청인지 검증
-        MentoringRequestEntity request = mentoringRequestRepository.findById(requestId)
-                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, String.format("멘토링 요청 정보를 찾을 수 없습니다. [%d]", requestId)));
+        MentoringRequestEntity request = this.getMentoringRequestEntityById(requestId);
 
         // 2. comment 필수값 검증
         if (comment.isEmpty()) {
@@ -171,9 +178,13 @@ public class MentoringService {
         LocalTime startTime = request.getStartTime();
         LocalTime endTime = request.getEndTime();
 
-        boolean conflict = !mentoringRequestRepository.findAllByUserAndDateAndStatusIn(mentorId, date, List.of(MentoringStatus.승인대기, MentoringStatus.승인)).stream()
-                .allMatch(req -> ((endTime.isBefore(req.getStartTime()) || endTime.equals(req.getStartTime())) ||
-                        (startTime.isAfter(req.getEndTime()) || startTime.equals(req.getEndTime()))));
+        boolean conflict = !mentoringRequestRepository.findAllByUserAndDateAndStatusIn(mentorId, date, List.of(MentoringStatus.승인)).stream()
+                .allMatch(req -> (
+                        endTime.isBefore(req.getStartTime()) ||
+                        endTime.equals(req.getStartTime()) ||
+                        startTime.isAfter(req.getEndTime()) ||
+                        startTime.equals(req.getEndTime()))
+                );
 
         if (conflict) {
             throw new MainApplicationException(ErrorCode.MENTOR_TIME_CONFLICT, "이미 다른 요청이 승인/대기 중입니다.");
@@ -185,13 +196,13 @@ public class MentoringService {
     }
 
     // 멘토링 반려
+    @Transactional
     public void rejectRequest(Long requestId, String comment) {
         log.info("멘토링 요청 반려 : [{}]", requestId);
 
         // 요청 검증
         // 1. 존재하는 요청인지 검증
-        MentoringRequestEntity request = mentoringRequestRepository.findById(requestId)
-                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, String.format("멘토링 요청 정보를 찾을 수 없습니다. [%d]", requestId)));
+        MentoringRequestEntity request = this.getMentoringRequestEntityById(requestId);;
 
         // 2. comment 필수값 검증
         if (comment.isEmpty()) {
@@ -206,9 +217,12 @@ public class MentoringService {
 
         mentoringRequestRepository.save(request);
     }
-    
+
+
+
+    @Transactional
     // 멘토링 취소
-    public void cancelRequest(Long requestId, String comment) {
+    public void cancelRequest(Long requestId, Long courseId, String comment, Long userId) {
         log.info("멘토링 요청 취소 : [{}]", requestId);
 
         // 요청 검증
@@ -225,13 +239,17 @@ public class MentoringService {
             throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인 대기 또는 승인 상태인 요청만 거절할 수 있습니다.");
         }
         // 4. 멘토링 요청 거절 가능 기간인지 조회
-        if (Objects.equals(request.getStatus(), MentoringStatus.승인) && LocalDate.now().isAfter(request.getDate().minusDays(2))) {
-            throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 최소 2일 전까지 취소 가능합니다.");
+        if (Objects.equals(request.getStatus(), MentoringStatus.승인) &&
+                LocalDateTime.now().isAfter(LocalDateTime.of(request.getDate(), request.getStartTime()).minusHours(24))) {
+            throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 멘토링 시작 24시간 전까지 취소 가능합니다.");
         }
 
-        request.cancel(comment);
+        CourseMemberEntity member = courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "유저가 코스 멤버가 아닙니다."));
 
-        mentoringRequestRepository.save(request);
+        request.cancel(comment, member.getRole());
+
+        mentoringRequestRepository.saveAndFlush(request);
     }
 
     // 멘토링 조회
@@ -254,6 +272,9 @@ public class MentoringService {
         }
         else if (mentorId == null && requesterId == null && menteeId != null && courseId != null && year > 0 && month > 0) {
             searchType = 멘티ID기준월별조회;
+        }
+        else if (mentorId == null && requesterId == null && menteeId != null && courseId != null && courseId.intValue() == 0 && year == 0 && month == 0) {
+            searchType = 멘티ID기준전체조회;
         }
 
         // searchType 별 조회
@@ -286,6 +307,17 @@ public class MentoringService {
                 LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
 
                 requests = mentoringRequestRepository.findAllByCourseIdAndDateBetweenAndStatus(courseId, from, to, MentoringStatus.승인).stream()
+                        .filter(req -> req.getMentees().containsKey(mentee.getStudentNo()))
+                        .toList();
+                break;
+            }
+            case 멘티ID기준전체조회: {
+                log.info("멘티 기준 전체 조회 - 멘티 ID = [{}]", menteeId);
+                // 멘티가 서비스에 가입되지 않은 경우 UserNotFound 에러 발생
+                UserEntity mentee = userRepository.findById(menteeId)
+                        .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보를 찾을 수 없습니다."));
+
+                requests = mentoringRequestRepository.findAll().stream()
                         .filter(req -> req.getMentees().containsKey(mentee.getStudentNo()))
                         .toList();
                 break;
@@ -383,8 +415,8 @@ public class MentoringService {
     public MentoringRequestDTO.MentoringRequest getMentoringRequest(Long id) {
         log.info("멘토링 요청 상세 조회 : [{}]", id);
 
-        MentoringRequestDTO.MentoringRequest request = mentoringRequestRepository.findById(id).map(MentoringRequestDTO.MentoringRequest::fromEntity)
-                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, String.format("멘토링 요청 내역을 찾을 수 없습니다. [%d]", id)));
+        MentoringRequestDTO.MentoringRequest request = MentoringRequestDTO.MentoringRequest.fromEntity(this.getMentoringRequestEntityById(id));
+
 
         // 이미지 및 파일 조회
         List<File> images = new ArrayList<>();
@@ -411,8 +443,8 @@ public class MentoringService {
     public void updateRequest(Long id, MentoringRequestDTO.Update dto) {
         log.info("멘토링 요청 정보 수정 : [{}]", id);
 
-        MentoringRequestEntity request = mentoringRequestRepository.findById(id)
-                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, String.format("멘토링 요청 내역을 찾을 수 없습니다. [%d]", id)));
+        MentoringRequestEntity request = this.getMentoringRequestEntityById(id);
+
 
         // 멘토링 내용 및 멘티정보 수정
         // 1. 입력값 검증
@@ -468,9 +500,6 @@ public class MentoringService {
         if (schedules.isEmpty()) return new ArrayList<>();
 
         // TimeSlot 생성
-        for (ScheduleEntity s : schedules) {
-            log.info("{} {} {} {}", s.getStartTime(), s.getEndTime(), s.getId().getDate(), s.getId().getSerNo());
-        }
         List<ScheduleDTO.Schedule> timeSlots = generateTimeSlots(schedules);
 
         // 유저 아이디와 날짜 기준으로 승인대기/승인 상태인 요청 내역을 모두 조회
@@ -596,7 +625,7 @@ public class MentoringService {
             return false;
         }
         // Slot이 request와 겹치는지 확인
-        return !(slot.getEndTime().isBefore(request.getStartTime()) || slot.getStartTime().isAfter(request.getEndTime()));
+        return !(slot.getEndTime().isBefore(request.getStartTime()) || slot.getStartTime().isAfter(request.getEndTime()) || slot.getStartTime().equals(request.getEndTime()));
     }
 
     // 증빙자료 관련 메서드
@@ -604,9 +633,18 @@ public class MentoringService {
         log.info("멘토링 증빙자료 조회 - course: {} mentor: {} month: {}", courseId, mentorId, month);
         List<MentoringResultDTO.MentoringResult> mentoringResults = new ArrayList<>();
         try {
-            LocalDate start = LocalDate.of(year, month, 1);
-            LocalDate end = LocalDate.of(year, month+1, 1).minusDays(1);
-            List<MentoringResultEntity> mentoringLogEntityList = mentoringResultRepository.findAllByCourseIdAndMentorIdAndDateBetweenOrderByDateAscTimeAsc(courseId, mentorId, start, end);
+            List<MentoringResultEntity> mentoringLogEntityList;
+            if (courseId.intValue() == 0 && year == 0 && month == 0) {
+                log.info("멘토별 증빙자료 전체 조회");
+                mentoringLogEntityList = mentoringResultRepository.findAllByMentorIdOrderByDateAscTimeAsc(mentorId);
+            }
+            else {
+                log.info("멘토별 월별 증빙자료 전체 조회");
+                LocalDate start = LocalDate.of(year, month, 1);
+                LocalDate end = LocalDate.of(year, month+1, 1).minusDays(1);
+                mentoringLogEntityList = mentoringResultRepository.findAllByCourseIdAndMentorIdAndDateBetweenOrderByDateAscTimeAsc(courseId, mentorId, start, end);
+            }
+
             if (!mentoringLogEntityList.isEmpty()) {
                 for (MentoringResultEntity result : mentoringLogEntityList) {
                     MentoringResultDTO.MentoringResult dto = MentoringResultDTO.MentoringResult.fromEntity(result);
@@ -616,7 +654,7 @@ public class MentoringService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new MainApplicationException(ErrorCode.SYS_INTERNAL_SERVER_ERROR, "증빙자료 리스트를 가져오는 도중 에러가 발생했습니다.");
         }
         return mentoringResults;
     }
@@ -668,8 +706,8 @@ public class MentoringService {
                             resultDTO.getDate(),
                             resultDTO.getTime(),
                             resultDTO.getLength(),
-                            result.getLocation(),
-                            result.getContent(),
+                            resultDTO.getLocation(),
+                            resultDTO.getContent(),
                             resultDTO.getMentees()
                     );
 
@@ -684,11 +722,13 @@ public class MentoringService {
                 MentoringResultEntity result = mentoringResultRepository.findById(resultDTO.getId())
                         .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, "증빙자료를 찾을 수 없습니다."));
 
-                MentoringRequestEntity request = mentoringRequestRepository.findById(result.getRequest().getId())
-                        .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, "멘토링 신청 내역을 찾을 수 없습니다."));
 
-                request.setRegistered(false);
-                mentoringRequestRepository.save(request);
+                MentoringRequestEntity request = this.getMentoringRequestEntityById(result.getRequest().getId());
+                if (result.getRequest() != null) {
+               
+                    request.setRegistered(false);
+                    mentoringRequestRepository.save(request);
+                }
 
                 // 이미지 파일 삭제
                 fileStorage.deleteAllFilesIn(AttachmentDomainType.MENTORING_RESULT, resultDTO.getId());
@@ -698,6 +738,32 @@ public class MentoringService {
 
             }
         }
+    }
+
+    public MentoringResultDTO.MentoringResult getResult(Long id) {
+        log.info("증빙자료 조회 : [{}]", id);
+
+        MentoringResultEntity result = mentoringResultRepository.findById(id)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, String.format("증빙자료를 찾을 수 없습니다. [%d]", id)));
+
+        MentoringResultDTO.MentoringResult dto =  MentoringResultDTO.MentoringResult.builder()
+                .id(result.getId())
+                .mentor(UserDTO.User.fromEntity(result.getMentor()))
+                .length(result.getLength())
+                .course(CourseDTO.Course.fromEntity(result.getCourse()))
+                .date(result.getDate())
+                .time(result.getTime())
+                .content(result.getContent())
+                .mentees(result.getMentees())
+                .location(result.getLocation())
+                .build();
+
+        // 이미지가 있을 경우 이미지 추가
+        List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.MENTORING_RESULT, id);
+
+        dto.setImages(images);
+
+        return dto;
     }
 
     @Transactional
@@ -710,8 +776,9 @@ public class MentoringService {
         CourseEntity course = member.getCourse();
         UserEntity mentor = member.getUser();
 
-        MentoringRequestEntity request = dto.getRequestId() == null ? null : mentoringRequestRepository.findById(dto.getRequestId())
-                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, "멘토링 신청 내역을 찾을 수 없습니다."));
+        MentoringRequestEntity request = dto.getRequestId() == null ? null :    this.getMentoringRequestEntityById(dto.getRequestId());
+
+
         if (request != null && !Objects.equals(request.getStatus(), MentoringStatus.승인)) {
             throw new MainApplicationException(ErrorCode.MENTORING_RESULT_INVALID_PARAMETER, "승인 상태의 신청 내역만 증빙자료 작성이 가능합니다.");
         }
@@ -743,16 +810,6 @@ public class MentoringService {
         }
     }
 
-//    @Override
-//    public MentoringLog updateLog(MentoringLog updatedLog) {
-//        log.info("멘토링 증빙자료 수정 : {} ", updatedLog.getId());
-//        MentoringResultEntity updated = mentoringResultRepository.findById(updatedLog.getId()).orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_NOT_FOUND, "MentoringLog Not Found"));
-//
-//        updated.updateMentoringLogDetails(updatedLog);
-//
-//        return MentoringLog.fromEntity(mentoringResultRepository.save(updated));
-//    }
-
     public void deleteLog(Long logId) {
         log.info("멘토링 증빙자료 삭제 : {}", logId);
         MentoringResultEntity deleted = mentoringResultRepository.findById(logId).orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, "증빙자료를 찾을 수 없습니다."));
@@ -779,5 +836,16 @@ public class MentoringService {
         LocalDate to = LocalDate.of(year, month + 1, 1).minusDays(1);
 
         return mentoringResultRepository.findAllByCourseIdAndMentorIdAndDateBetweenOrderByDateAscTimeAsc(courseId, mentorId, from, to).size();
+    }
+
+    public MentoringRequestEntity getMentoringRequestByMentorAndMentee(Long mentorId, Long requesterId) {
+            return mentoringRequestRepository.findTopByMentorIdAndRequesterIdOrderByIdDesc(mentorId, requesterId)
+                    .orElseThrow(() -> new EntityNotFoundException("해당 멘토와 멘티 간의 멘토링 요청이 존재하지 않습니다."));
+    }
+
+
+    public MentoringRequestEntity getMentoringRequestEntityById(Long requestId) {
+        return mentoringRequestRepository.findById(requestId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_REQUEST_NOT_FOUND, String.format("멘토링 요청 내역을 찾을 수 없습니다. [%d]", requestId)));
     }
 }

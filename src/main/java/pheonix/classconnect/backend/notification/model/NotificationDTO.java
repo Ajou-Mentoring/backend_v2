@@ -8,7 +8,8 @@ import lombok.Setter;
 import pheonix.classconnect.backend.course.model.CourseDTO;
 import pheonix.classconnect.backend.notification.entity.NotificationEntity;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -16,14 +17,17 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class NotificationDTO {
 
-    private Integer id;
-    //    private User user;
+    private Long id;
     private CourseDTO.Course course;
     private String content;
     private Boolean isRead;
     private Integer domain;
-    private Integer domainId;
-    private LocalDateTime createdAt;
+    private Long domainId;
+
+    private LocalDate createdDate;
+
+    private LocalTime createdTime;
+
 
     public static NotificationDTO fromEntity(NotificationEntity entity){
         return new NotificationDTO(entity.getId(),
@@ -32,7 +36,8 @@ public class NotificationDTO {
                 entity.getIsRead(),
                 entity.getDomain().getCode(),
                 entity.getDomainId(),
-                entity.getCreatedAt().toLocalDateTime()
+                entity.getCreatedDate(),
+                entity.getCreatedTime()
         );
     }
 }

@@ -3,6 +3,7 @@ package pheonix.classconnect.backend.qna.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import pheonix.classconnect.backend.com.common.entity.BaseTimeEntity;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
@@ -12,12 +13,16 @@ import java.time.LocalTime;
 
 @Table(name = "QNA")
 @Entity(name = "QNA")
+@Getter
 @Builder
 @AllArgsConstructor @NoArgsConstructor
 public class QnaEntity extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "title", length = 80)
+    private String title;
 
     @Column(name = "pub_gubun")
     private Short publishType;
@@ -51,6 +56,20 @@ public class QnaEntity extends BaseTimeEntity {
         this.answerDate = LocalDate.now();
         this.answerTime = LocalTime.now();
         this.answered = true;
+    }
+
+    public void removeAnswer() {
+        this.answer = null;
+        this.answerer = null;
+        this.answerDate = null;
+        this.answerTime = null;
+        this.answered = false;
+    }
+
+    public void updateQuestion(String title, String question, Short publishType) {
+        this.title = title;
+        this.question = question;
+        this.publishType = publishType;
     }
 
 }

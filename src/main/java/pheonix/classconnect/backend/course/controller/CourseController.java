@@ -51,7 +51,7 @@ public class CourseController {
      * @return Response
      */
     @PostMapping(value = "/courses")
-    public Response<String> create(@ModelAttribute @Valid CourseCreateRequestDTO request,
+    public Response<String> create(@RequestBody @Valid CourseCreateRequestDTO request,
                            @AuthenticationPrincipal User user
                            ) {
 
@@ -176,7 +176,13 @@ public class CourseController {
         // 코스 정보 세팅
         CourseResponse response = CourseResponse.fromCourse(courseService.getACourseById(courseId));
         // 코스 이미지 정보 세팅
-        response.setImage(FileResponse.Info.fromFile(fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId).getFirst()));
+        List<File> images = fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId);
+        if (images.isEmpty()) {
+            response.setImage(null);
+        } else {
+            response.setImage(FileResponse.Info.fromFile(images.getLast()));
+        }
+        //response.setImage(FileResponse.Info.fromFile(fileStorage.getAttachmentList(AttachmentDomainType.COURSE, courseId).getFirst()));
         // 코스 역할 세팅
         response.setRole(courseMemberService.findMemberRoleInClass(Long.parseLong(user.getUsername()), courseId));
 
@@ -312,6 +318,22 @@ public class CourseController {
         courseMemberService.updateMemberRoleInCourse(courseId, memberId, role);
 
         return Response.ok(HttpStatus.ACCEPTED, "멤버 역할을 수정했습니다.", null);
+    }
+
+    // 멤버 권한 변경
+    @DeleteMapping("/courses/{courseId}/members/{memberId}")
+    public Response<List<UserDTO.Response01>> removeMember(@PathVariable(value = "courseId") Long courseId,
+                                                           @PathVariable(value = "memberId") Long memberId,
+                                                           @AuthenticationPrincipal User user
+    ) {
+        log.info("CourseController.removeMember({}, {})", courseId, memberId);
+
+        if (!principalDetailsService.isAdmin(user)) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "관리자 권한만 멤버를 추방할 수 있습니다.");
+        }
+        courseMemberService.excludeMemberFromCourse(courseId, memberId);
+
+        return Response.ok(HttpStatus.ACCEPTED, "멤버를 추방했습니다.", null);
     }
 
     @PostMapping("/courses/join")

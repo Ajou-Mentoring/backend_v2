@@ -107,4 +107,9 @@ public class NotificationService {
     public void updateAllNotificationsRead(Long userId) {
         notificationRepository.updateNotificationsRead(userId);
     }
+
+    @Transactional
+    public void createNotification(NotificationEntity notificationEntity) {
+        notificationRepository.save(notificationEntity);
+    }
 }

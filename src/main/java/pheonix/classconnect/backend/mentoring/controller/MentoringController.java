@@ -98,8 +98,8 @@ public class MentoringController {
     // 월별 멘토링 신청 내역 조회
     @GetMapping("/courses/{courseId}/requests")
     public Response<List<MentoringRequestDTO.Response01>> getMentoringRequests(@PathVariable(value = "courseId") Long courseId,
-                                                                               @RequestParam(value = "year") int year,
-                                                                               @RequestParam(value = "month") int month,
+                                                                               @RequestParam(value = "year", defaultValue = "0") int year,
+                                                                               @RequestParam(value = "month", defaultValue = "0") int month,
                                                                                @RequestParam(value = "mentor", required = false) Long mentorId,
                                                                                @RequestParam(value = "requester", required = false) Long requesterId,
                                                                                @RequestParam(value = "mentee", required = false) Long menteeId,
@@ -110,10 +110,19 @@ public class MentoringController {
         if (user == null) {
             throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "권한 정보가 없습니다.");
         }
-        // 관리자 또는 코스 멤버가 아니라면 조회 권한 없음
-        if (!courseMemberService.isCourseMember(courseId, Long.parseLong(user.getUsername())) && !principalDetailsService.isAdmin(user) ) {
-            throw new MainApplicationException(ErrorCode.MENTOR_UNAUTHORIZED, "코스 멤버 또는 관리자만 접근 가능한 요청입니다.");
+        // courseId == 0이라면 전체 코스 조회이기 때문에 관리자만 조회 가능함
+        if (courseId.intValue() == 0) {
+            if (!principalDetailsService.isAdmin(user)) {
+                throw new MainApplicationException(ErrorCode.MENTOR_UNAUTHORIZED, "관리자만 접근 가능한 요청입니다.");
+            }
         }
+        // 관리자 또는 코스 멤버가 아니라면 조회 권한 없음
+        else {
+            if (!courseMemberService.isCourseMember(courseId, Long.parseLong(user.getUsername())) && !principalDetailsService.isAdmin(user) ) {
+                throw new MainApplicationException(ErrorCode.MENTOR_UNAUTHORIZED, "코스 멤버 또는 관리자만 접근 가능한 요청입니다.");
+            }
+        }
+
 
         List<MentoringRequestDTO.Response01> res = mentoringService.getMentoringRequests(mentorId, requesterId, menteeId, courseId, year, month).stream()
                 .map(request -> MentoringRequestDTO.Response01.builder()
@@ -283,10 +292,11 @@ public class MentoringController {
         else if (req.getAction() == 3) {
             // 멘토링 취소는 신청자만 가능
             MentoringRequestDTO.MentoringRequest request = mentoringService.getMentoringRequest(requestId);
-            if (Long.parseLong(user.getUsername()) != request.getRequester().getId()) {
+            Long usrId = Long.parseLong(user.getUsername());
+            if (!(usrId.equals(request.getRequester().getId()) || usrId.equals(request.getMentor().getId()))) {
                 throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_FORBIDDEN_REQUEST, "취소 권한이 없습니다.");
             }
-            mentoringService.cancelRequest(requestId, req.getComment());
+            mentoringService.cancelRequest(requestId, courseId, req.getComment(), usrId);
 
             return Response.ok(HttpStatus.ACCEPTED, "멘토링 신청을 취소하였습니다.", null);
         }
@@ -299,8 +309,8 @@ public class MentoringController {
     @GetMapping("/courses/{courseId}/members/{memberId}/stats")
     public Response<List<UserDTO.Response04>> getMembersStats(@PathVariable(value = "courseId") Long courseId,
                                                               @PathVariable(value = "memberId") Long memberId,
-                                                              @RequestParam(value = "year", defaultValue = "0") int year,
-                                                              @RequestParam(value = "month", defaultValue = "0") int month,
+                                                              @RequestParam(value = "year", defaultValue = "2025") int year,
+                                                              @RequestParam(value = "month", defaultValue = "3") int month,
                                                               @RequestParam(value = "groupBy") String groupBy,
                                                               @AuthenticationPrincipal User user)
     {
@@ -395,8 +405,8 @@ public class MentoringController {
     @GetMapping("/courses/{courseId}/results")
     public Response<List<MentoringResultDTO.Response01>> getMentoringResults(@PathVariable(value = "courseId") Long courseId,
                                                                              @RequestParam(value = "mentorId") Long mentorId,
-                                                                             @RequestParam(value = "year", defaultValue = "2025") int year,
-                                                                             @RequestParam(value = "month", defaultValue = "3") int month,
+                                                                             @RequestParam(value = "year", defaultValue = "0") int year,
+                                                                             @RequestParam(value = "month", defaultValue = "0") int month,
                                                                              @AuthenticationPrincipal User user) {
         log.info("MentoringController.getMentoringResults({}, {}, {}, {})", courseId, mentorId, year, month);
 
@@ -404,7 +414,7 @@ public class MentoringController {
         if (courseId == null)
             throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID는 필수 값입니다.");
         if (mentorId == null)
-            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "코스 ID는 필수 값입니다.");
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "멘토 ID는 필수 값입니다.");
 
         if (user == null || (!principalDetailsService.isAdmin(user)) && (Long.parseLong(user.getUsername()) != mentorId)) {
             throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "요청 권한이 없습니다.");
@@ -516,5 +526,47 @@ public class MentoringController {
         mentoringService.patchMentoringLogs(courseId, Long.parseLong(user.getUsername()), dtoList);
 
         return Response.ok(HttpStatus.ACCEPTED, "증빙자료를 수정했습니다.", null);
+    }
+
+    // 증빙자료 조회
+    @GetMapping("/results/{resultId}")
+    public Response<MentoringResultDTO.Response02> getMentoringResult(@PathVariable(value = "resultId") Long resultId,
+                                                                      @AuthenticationPrincipal User user) {
+        log.info("MentoringController.getMentoringResult({})", resultId);
+
+        // 요청 검증
+        if (resultId == null)
+            throw new MainApplicationException(ErrorCode.MENTORING_RESULT_PARAMETER_NULL, "신청 ID는 필수 값입니다.");
+
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "유저 권한 정보가 없습니다.");
+        }
+
+
+        MentoringResultDTO.MentoringResult result = mentoringService.getResult(resultId);
+
+        List<MentoringResultDTO.Mentee> mentees = result.getMentees().entrySet().stream()
+                .map(mentee -> MentoringResultDTO.Mentee.builder()
+                        .studentNo(mentee.getKey())
+                        .name(mentee.getValue().toString())
+                        .build())
+                .toList();
+
+        MentoringResultDTO.Response02 res = MentoringResultDTO.Response02.builder()
+                .id(result.getId())
+                .date(result.getDate())
+                .time(result.getTime())
+                .duration(result.getLength())
+                .content(result.getContent())
+                .location(result.getLocation())
+                .mentees(mentees)
+                .build();
+
+        res.setImages(result.getImages().stream()
+                .map(FileResponse.Info::fromFile)
+                .toList());
+
+
+        return Response.ok(HttpStatus.OK, "증빙자료 리스트를 조회했습니다.", res);
     }
 }

@@ -17,6 +17,9 @@ public enum ErrorCode {
     DUPLICATED_USER(                HttpStatus.BAD_REQUEST,                    "USER001" ,  "중복된 사용자입니다."),
     USER_CREATE_FAILED(              HttpStatus.INTERNAL_SERVER_ERROR,      "USER002" , "유저 생성에 실패했습니다."),
     USER_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "USER003",      "유저를 찾을 수 없습니다."),
+    USER_BAD_REQUEST(HttpStatus.BAD_REQUEST,                   "USER004",      "잘못된 요청입니다."),
+
+
     AUTH_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "AUTH001",   "권한을 찾을 수 없습니다."),
 
     UNSUPPORTED_FILE(HttpStatus.BAD_REQUEST, "FILE001", "지원하지 않는 파일 구분입니다."),
@@ -33,8 +36,11 @@ public enum ErrorCode {
     POST_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "POST001", "지원하지 않는 파라미터입니다."),
     POST_NOT_FOUND(HttpStatus.BAD_REQUEST, "POST002", "게시물을 찾을 수 없습니다."),
     POST_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "POST003", "게시물 접근 권한이 없습니다."),
+
     QNA_NOT_FOUND(HttpStatus.NOT_FOUND, "QNA001", "Q&A 게시물을 찾을 수 없습니다."),
     QNA_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "QNA002", "Q&A 게시물 접근 권한이 없습니다."),
+    QNA_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "QNA003", "파라미터 오류입니다."),
+    QNA_BAD_REQUEST(HttpStatus.BAD_REQUEST, "QNA004", "잘못된 요청입니다."),
 
     MENTOR_TIME_CONFLICT(HttpStatus.CONFLICT, "MENTOR409", "멘토링 스케줄 중복입니다."),
     MENTOR_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "MENTOR001", "멘토링 접근 권한이 없습니다."),
@@ -48,8 +54,10 @@ public enum ErrorCode {
     MENTORING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR009", "증빙자료를 찾을 수 없습니다."),
     MENTORING_RESULT_PARAMETER_NULL(HttpStatus.BAD_REQUEST, "MENTOR010", "증빙자료 파라미터가 널입니다."),
     MENTORING_RESULT_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "MENTOR011", "증빙자료 파라미터가 유효하지 않은 값입니다."),
+
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION01", "알림을 찾을 수 없습니다." ),
     NOTIFICATION_NOT_AUTHORIZED(HttpStatus.UNAUTHORIZED, "NOTIFIACTION02", "알림에 대한 권한이 없습니다." );
+
 
     private final HttpStatus httpStatus;
     private final String code;
