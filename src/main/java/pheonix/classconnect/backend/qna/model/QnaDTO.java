@@ -45,7 +45,7 @@ public class QnaDTO {
                     .answer(entity.getAnswer())
                     .answerImages(new ArrayList<>())
                     .answerer(UserDTO.User.fromEntity(entity.getAnswerer()))
-                    .answeredAt(LocalDateTime.of(entity.getAnswerDate(), entity.getAnswerTime()))
+                    .answeredAt(entity.getAnswered() != true ? null : LocalDateTime.of(entity.getAnswerDate(), entity.getAnswerTime()))
                     .answered(entity.getAnswered())
                     .build();
         }
@@ -75,8 +75,8 @@ public class QnaDTO {
     @Builder
     public static class Request01 {
         private String title;       /*제목*/
-        private String question;    /*질문*/
-        private Short PublishType;  /*공개여부*/
+        private String content;    /*질문*/
+        private Short publishType;  /*공개여부*/
         private List<Long> images;  /*이미지 리스트*/
     }
 
@@ -85,7 +85,7 @@ public class QnaDTO {
     @Builder
     public static class Request02 {
         private String title;       /*제목*/
-        private String question;    /*질문*/
+        private String content;    /*질문*/
         private Short publishType;  /*공개여부*/
         private List<Long> images;  /*이미지 리스트*/
     }
@@ -94,7 +94,7 @@ public class QnaDTO {
     @Data
     @Builder
     public static class Request03 {
-        private String answer;    /*질문*/
+        private String content;    /*질문*/
         private List<Long> images;  /*이미지 리스트*/
     }
 
@@ -115,8 +115,8 @@ public class QnaDTO {
     public static class UpdateQuestion {
         private Long id;            /*Q&A ID*/
         private String title;       /*제목*/
-        private String question;    /*질문*/
-        private Short PublishType;  /*공개여부*/
+        private String content;    /*질문*/
+        private Short publishType;  /*공개여부*/
         private List<Long> images;  /*이미지 리스트*/
     }
 
@@ -131,19 +131,7 @@ public class QnaDTO {
         private boolean answered;                   /*답변 여부*/
         private UserDTO.Response02 user;
         private LocalDateTime createdAt;
-        private boolean updated;
-    }
-
-    // 리스트
-    @Data
-    @Builder
-    public static class Response11 {
-        private Long id;
-        private String title;
-        private Short publishType;
-        private String question;
-        private UserDTO.Response02 questioner;
-        private Boolean answered;
+        //private boolean updated;
     }
 
     @Data
@@ -153,7 +141,19 @@ public class QnaDTO {
         private String content;
         private List<FileResponse.Info> images;
         private LocalDateTime createdAt;
-        private boolean updated;
+        //private boolean updated;
+    }
+
+    // 리스트
+    @Data
+    @Builder
+    public static class Response11 {
+        private Long id;
+        private String title;
+        private Short publishType;
+        private UserDTO.Response02 questioner;
+        private Boolean answered;
+        private LocalDateTime createdAt;
     }
 
     // 질문 상세 응답
@@ -173,7 +173,7 @@ public class QnaDTO {
         private UserDTO.Response02 user;            /*질문자*/
         private boolean isPublic;                     /*공개여부*/
         private boolean answered;                   /*답변 여부*/
-        private boolean updated;                    /*수정 여부*/
+        //private boolean updated;                    /*수정 여부*/
         private LocalDateTime createdAt;            /*질문 등록일*/
     }
 }

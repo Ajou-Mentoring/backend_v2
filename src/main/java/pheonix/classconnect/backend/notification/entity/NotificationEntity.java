@@ -28,7 +28,7 @@ public class NotificationEntity  {
     private UserEntity user;
 
     @ManyToOne
-    @JoinColumn(name = "course_id", nullable = false)
+    @JoinColumn(name = "course_id", nullable = true)
     private CourseEntity course;
 
     @Column(name = "content", nullable = false)

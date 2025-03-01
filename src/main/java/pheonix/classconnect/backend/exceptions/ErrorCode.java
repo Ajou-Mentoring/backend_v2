@@ -17,6 +17,9 @@ public enum ErrorCode {
     DUPLICATED_USER(                HttpStatus.BAD_REQUEST,                    "USER001" ,  "중복된 사용자입니다."),
     USER_CREATE_FAILED(              HttpStatus.INTERNAL_SERVER_ERROR,      "USER002" , "유저 생성에 실패했습니다."),
     USER_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "USER003",      "유저를 찾을 수 없습니다."),
+    USER_BAD_REQUEST(HttpStatus.BAD_REQUEST,                   "USER004",      "잘못된 요청입니다."),
+
+
     AUTH_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "AUTH001",   "권한을 찾을 수 없습니다."),
 
     UNSUPPORTED_FILE(HttpStatus.BAD_REQUEST, "FILE001", "지원하지 않는 파일 구분입니다."),

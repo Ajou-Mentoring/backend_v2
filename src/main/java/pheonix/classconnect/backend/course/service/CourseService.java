@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
 import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
+import pheonix.classconnect.backend.com.user.entity.UserEntity;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
 import pheonix.classconnect.backend.course.constants.CourseRole;
@@ -65,10 +66,13 @@ public class CourseService {
         CourseEntity saved = courseEntityRepository.save(course);
 
         // 이미지가 존재한다면 매핑
-        File courseImage = fileStorage.getFileById(imageId);
-        if (courseImage != null) {
-            fileStorage.mapFileToDomain(imageId, AttachmentDomainType.COURSE, saved.getId());
+        if (imageId != null) {
+            File courseImage = fileStorage.getFileById(imageId);
+            if (courseImage != null) {
+                fileStorage.mapFileToDomain(imageId, AttachmentDomainType.COURSE, saved.getId());
+            }
         }
+
     }
 
     @Transactional
@@ -382,5 +386,10 @@ public class CourseService {
         course.setMemberCode(this.generateMemberCode());
 
         courseEntityRepository.save(course);
+    }
+
+    public CourseEntity findCourseById(Long courseId){
+        return courseEntityRepository.findById(courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_NOT_FOUND));
     }
 }

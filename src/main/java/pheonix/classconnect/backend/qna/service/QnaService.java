@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.common.model.Paged;
 import pheonix.classconnect.backend.com.user.repository.UserRepository;
@@ -46,6 +45,7 @@ public class QnaService {
                 .question(dto.getContent())
                 .questioner(questioner)
                 .publishType(dto.getPublishType())
+                .answered(false)
                 .build();
 
         Long qnaId = qnaRepository.save(saved).getId();
@@ -69,7 +69,7 @@ public class QnaService {
         }
         // 본처리
         // 질문 생성
-        entity.updateQuestion(dto.getTitle(), dto.getQuestion(), dto.getPublishType());
+        entity.updateQuestion(dto.getTitle(), dto.getContent(), dto.getPublishType());
 
         qnaRepository.save(entity);
 
@@ -78,6 +78,7 @@ public class QnaService {
     }
 
     // 질문 삭제
+    @Transactional
     public void removeQuestion(Long id) {
         log.info("질문 삭제");
 
@@ -106,6 +107,19 @@ public class QnaService {
         // 이미지
         qna.setQuestionImages(fileStorage.getAttachmentList(AttachmentDomainType.QUESTION, entity.getId()));
         qna.setAnswerImages(fileStorage.getAttachmentList(AttachmentDomainType.ANSWER, entity.getId()));
+
+        return qna;
+    }
+
+    public QnaDTO.Qna getQnaAndUsersByQnaId(Long id){
+        log.info("Q&A 조회");
+
+        // 요청 검증
+        QnaEntity entity = qnaRepository.findByIdWithUsers(id)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.QNA_NOT_FOUND, String.format("조회할 Q&A를 찾을 수 없습니다. [%d]", id)));
+
+        // 본처리
+        QnaDTO.Qna qna = QnaDTO.Qna.fromEntity(entity);
 
         return qna;
     }
@@ -145,9 +159,9 @@ public class QnaService {
     public void createAnswer(QnaDTO.Answer dto) {
         log.info("답변 생성");
 
-        // 입력값 검증
         QnaEntity qna = qnaRepository.findById(dto.getId())
-                .orElseThrow(() -> new MainApplicationException(ErrorCode.QNA_NOT_FOUND, "Q&A 게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.QNA_NOT_FOUND,
+                        String.format("조회할 Q&A를 찾을 수 없습니다. [%d]", dto.getId())));
 
         UserEntity answerer = userRepository.findById(dto.getAnswererId())
                 .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "답변자 정보를 찾을 수 없습니다."));
@@ -165,6 +179,7 @@ public class QnaService {
     }
 
     // 답변 수정 - 이미지 포함, 삭제가 아니면
+    @Transactional
     public void updateAnswer(QnaDTO.Answer dto) {
         log.info("답변 수정");
 
@@ -188,6 +203,7 @@ public class QnaService {
     }
 
     // 답변 삭제
+    @Transactional
     public void deleteAnswer(Long id) {
         log.info("답변 삭제");
 

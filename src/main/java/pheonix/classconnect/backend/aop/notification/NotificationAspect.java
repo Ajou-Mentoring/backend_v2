@@ -40,9 +40,6 @@ public class NotificationAspect {
     private NotificationService notificationService;
 
 
-    @Autowired
-    private CourseMemberService courseMemberService;
-
 
     @Autowired
     private MentoringService mentoringService;
@@ -145,13 +142,15 @@ public class NotificationAspect {
         sendNotificationAfterCourseRoleChanged(courseId, userId, role);
     }
 
+    @Transactional(readOnly = true)
     @AfterReturning(value = "qnaAnswerCreated(dto)")
     public void afterQnaAnswerCreated(QnaDTO.Answer dto){
-        System.out.println("답변 생성확ㅇ닌\n\n");
-        UserDTO.User usr = userService.findUserById(dto.getAnswererId());
-        boolean isOnlyStudent = usr.getAuthorities().stream()
+        QnaDTO.Qna qna = qnaService.getQnaAndUsersByQnaId(dto.getId());
+        Long questionerId = qna.getQuestioner().getId();
+
+        boolean isOnlyStudent = qna.getAnswerer().getAuthorities().stream()
                 .map(AuthorityDTO.AuthorityInfo::getCode)
-                .allMatch(code -> code == 1);
+                .anyMatch(code -> code == 9);
 
 
         //관리자라면
@@ -159,17 +158,14 @@ public class NotificationAspect {
             return;
         }
 
-        String content = "관리자로 부터 " + dto.getAnswer() + " 외 " + dto.getAnswerImages().size() + "개의 이미지와 함께 답변이 달렸습니다.";
-        QnaDTO.Qna qna = qnaService.getQnaById(dto.getId());
+        String content =  qna.getTitle()+ "  문의의 답변이 작성되었습니다.";
 
-        UserEntity questioner = entityManager.getReference(UserEntity.class, qna.getQuestioner().getId());
+        UserEntity questioner = entityManager.getReference(UserEntity.class, questionerId);
 
-        //QNA는 별도의 Course가 없으므로 courseId 임의로 0으로 고정
-        CourseEntity courseEntity = entityManager.getReference(CourseEntity.class, 0);
 
         NotificationEntity notificationEntity = NotificationEntity.builder()
                 .user(questioner)
-                .course(courseEntity)
+                .course(null)
                 .content(content)
                 .domainId(qna.getId())
                 .domain(NotificationDomain.QNA)
@@ -209,8 +205,8 @@ public class NotificationAspect {
 
     private void sendNotificationAfterCourseRoleChanged(Long courseId, Long userId, Short role) {
         // 강의 및 사용자 조회
-        CourseDTO.Course course = courseService.getACourseById(courseId);
-        UserDTO.User  user = userService.findUserById(userId);
+        CourseEntity course = courseService.findCourseById(courseId);
+        UserEntity user = userService.findUserInfoById(userId);
 
         // 역할에 따른 메시지 설정
         String roleName;
@@ -226,18 +222,18 @@ public class NotificationAspect {
         }
 
 
-        String content = String.format("%s님이 %s 수업에서 %s 역할로 변경되었습니다.",
+        String content = String.format("%s님이 %s 수업의 %s 역할로 변경되었습니다.",
                 user.getName(), course.getName(), roleName);
 
 
-        UserEntity userEntity = entityManager.getReference(UserEntity.class, user.getId());
-        CourseEntity courseEntity = entityManager.getReference(CourseEntity.class, course.getId());
+
 
         NotificationEntity notificationEntity = NotificationEntity.builder()
-                .user(userEntity)
-                .course(courseEntity)
+                .user(user)
+                .course(course)
                 .content(content)
-                .domainId(courseEntity.getId())
+                .domainId(course.getId())
+                .domain(NotificationDomain.COURSE)
                 .isRead(false)
                 .build();
 
