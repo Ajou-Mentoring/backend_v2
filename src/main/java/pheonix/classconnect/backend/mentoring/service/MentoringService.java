@@ -58,6 +58,7 @@ public class MentoringService {
     public void createRequest(MentoringRequestDTO.Create dto) {
         log.info("멘토링 요청 생성");
 
+
         // 요청 검증
         if (dto.getSite() != MentoringSite.ONLINE && dto.getSite() != MentoringSite.OFFLINE) {
             throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, String.format("지원하지 않는 멘토링 방식 구분입니다. [%d]", dto.getSite()));
@@ -218,7 +219,7 @@ public class MentoringService {
 
     @Transactional
     // 멘토링 취소
-    public void cancelRequest(Long requestId, String comment) {
+    public void cancelRequest(Long requestId, Long courseId, String comment, Long userId) {
         log.info("멘토링 요청 취소 : [{}]", requestId);
 
         // 요청 검증
@@ -240,9 +241,12 @@ public class MentoringService {
             throw new MainApplicationException(ErrorCode.MENTORING_INVALID_STATUS_CHANGE, "승인된 멘토링은 멘토링 시작 24시간 전까지 취소 가능합니다.");
         }
 
-        request.cancel(comment);
+        CourseMemberEntity member = courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.COURSE_MEMBER_NOT_FOUND, "유저가 코스 멤버가 아닙니다."));
 
-        mentoringRequestRepository.save(request);
+        request.cancel(comment, member.getRole());
+
+        mentoringRequestRepository.saveAndFlush(request);
     }
 
     // 멘토링 조회
