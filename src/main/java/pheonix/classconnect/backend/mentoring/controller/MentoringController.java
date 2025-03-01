@@ -133,6 +133,7 @@ public class MentoringController {
                                 .studentNo(request.getMentor().getStudentNo())
                                 .email(request.getMentor().getEmail())
                                 .courseRole(CourseRole.MENTOR)
+                                .department(request.getMentor().getDepartment().getName())
                                 .build())
                         .date(request.getDate())
                         .startTime(request.getStartTime())
