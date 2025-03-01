@@ -1,6 +1,5 @@
 package pheonix.classconnect.backend.com.user.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -12,12 +11,16 @@ import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.model.response.FileResponse;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.auth.model.AuthorityDTO;
+import pheonix.classconnect.backend.com.common.model.PageRequest;
+import pheonix.classconnect.backend.com.common.model.PageResponse;
 import pheonix.classconnect.backend.com.common.model.Paged;
 import pheonix.classconnect.backend.com.common.model.Response;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 import pheonix.classconnect.backend.com.user.service.UserService;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
+import pheonix.classconnect.backend.notification.service.NotificationService;
+import pheonix.classconnect.backend.security.utils.PrincipalUtils;
 
 import java.util.List;
 
@@ -28,6 +31,9 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
     private final FileStorage fileStorage;
+
+    private final NotificationService notificationService;
+
 
     @GetMapping("/users/me/profile")
     public Response<UserDTO.Response00> getUserProfile(@AuthenticationPrincipal User user) {
@@ -60,6 +66,33 @@ public class UserController {
         res.setProfile(profileImg);
 
         return Response.ok(HttpStatus.OK, "프로필을 조회했습니다.", res);
+    }
+
+
+    /**
+     * 현재 로그인한 사용자의 알림 목록을 조회하는 API
+     * @param dto : 페이징 처리를 위한 요청 객체
+     * @param user : 현재 인증된 사용자 객체
+     * @return 사용자의 알림 목록을 담은 Response 객체
+     */
+    @GetMapping("/users/me/notifications")
+    public Response<PageResponse> getMyNotifications(@ModelAttribute PageRequest dto, @AuthenticationPrincipal User user){
+
+        Long userId = PrincipalUtils.getUserId(user);
+
+        return Response.ok(HttpStatus.OK, "내 알림을 조회하였습니다.", notificationService.getMyNotifications(userId, dto));
+    }
+
+    /**
+     * 현재 로그인한 사용자의 읽지 않은 알림 개수를 조회하는 API
+     * @param user : 현재 인증된 사용자 객체
+     * @return 읽지 않은 알림 개수를 담은 Response 객체
+     */
+    @GetMapping("/users/me/notifications/unread-count")
+    public Response<Integer> getMyUnReadNotificationsCount(@AuthenticationPrincipal org.springframework.security.core.userdetails.User user) {
+
+        Long userId = PrincipalUtils.getUserId(user);
+        return Response.ok(HttpStatus.OK, "내가 읽지 않은 알림 갯수를 조회하였습니다.", notificationService.getMyUnreadNotificationsCount(userId));
     }
 
     @GetMapping("/users")

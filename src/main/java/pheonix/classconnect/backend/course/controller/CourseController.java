@@ -298,6 +298,7 @@ public class CourseController {
                         .email(member.getUser().getEmail())
                         .studentNo(member.getUser().getStudentNo())
                         .courseRole(member.getCourseRole())
+                        .department(member.getUser().getDepartment().getName())
                         .build())
                 .toList();
         return Response.ok(HttpStatus.OK, "코스 멤버를 조회했습니다.", result);
@@ -305,7 +306,7 @@ public class CourseController {
 
     // 멤버 권한 변경
     @PatchMapping("/courses/{courseId}/members/{memberId}")
-    public Response<List<UserDTO.Response01>> changeRole(@PathVariable(value = "courseId") Long courseId,
+    public Response changeRole(@PathVariable(value = "courseId") Long courseId,
                                                          @PathVariable(value = "memberId") Long memberId,
                                                          @RequestParam(value = "role") Short role,
                                                          @AuthenticationPrincipal User user
@@ -322,7 +323,7 @@ public class CourseController {
 
     // 멤버 권한 변경
     @DeleteMapping("/courses/{courseId}/members/{memberId}")
-    public Response<List<UserDTO.Response01>> removeMember(@PathVariable(value = "courseId") Long courseId,
+    public Response removeMember(@PathVariable(value = "courseId") Long courseId,
                                                            @PathVariable(value = "memberId") Long memberId,
                                                            @AuthenticationPrincipal User user
     ) {

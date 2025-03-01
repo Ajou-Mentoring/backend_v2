@@ -53,7 +53,11 @@ public enum ErrorCode {
     MENTEE_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR008", "멘티를 찾을 수 없습니다."),
     MENTORING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR009", "증빙자료를 찾을 수 없습니다."),
     MENTORING_RESULT_PARAMETER_NULL(HttpStatus.BAD_REQUEST, "MENTOR010", "증빙자료 파라미터가 널입니다."),
-    MENTORING_RESULT_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "MENTOR011", "증빙자료 파라미터가 유효하지 않은 값입니다.");
+    MENTORING_RESULT_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "MENTOR011", "증빙자료 파라미터가 유효하지 않은 값입니다."),
+
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION01", "알림을 찾을 수 없습니다." ),
+    NOTIFICATION_NOT_AUTHORIZED(HttpStatus.UNAUTHORIZED, "NOTIFIACTION02", "알림에 대한 권한이 없습니다." );
+
 
     private final HttpStatus httpStatus;
     private final String code;

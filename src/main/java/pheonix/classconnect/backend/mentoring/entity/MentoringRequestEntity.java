@@ -8,6 +8,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.Type;
 import pheonix.classconnect.backend.com.common.entity.BaseTimeEntity;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
+import pheonix.classconnect.backend.course.constants.CourseRole;
 import pheonix.classconnect.backend.course.entity.CourseEntity;
 import pheonix.classconnect.backend.mentoring.contants.MentoringStatus;
 
@@ -79,8 +80,8 @@ public class MentoringRequestEntity extends BaseTimeEntity {
         this.comment = comment;
     }
 
-    public void cancel(String comment) {
-        this.status = MentoringStatus.취소;
+    public void cancel(String comment, Short role) {
+        this.status = role == CourseRole.MENTOR ? MentoringStatus.멘토취소 : MentoringStatus.멘티취소;
         this.comment = comment;
     }
 

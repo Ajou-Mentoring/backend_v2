@@ -1,6 +1,7 @@
 package pheonix.classconnect.backend.com.user.service;
 
 import pheonix.classconnect.backend.com.common.model.Paged;
+import pheonix.classconnect.backend.com.user.entity.UserEntity;
 import pheonix.classconnect.backend.com.user.model.UserDTO;
 
 public interface UserService {
@@ -12,4 +13,6 @@ public interface UserService {
     Paged<UserDTO.User> findUsersByName(String name, int page, int size);
     Paged<UserDTO.User> findUsersByStudentNo(String no, int page, int size);
     Paged<UserDTO.User> findUsers(int page, int size);
+
+    UserEntity findUserInfoById(Long id);
 }

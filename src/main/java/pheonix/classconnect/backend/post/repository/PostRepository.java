@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import pheonix.classconnect.backend.post.entity.PostEntity;
 
 public interface PostRepository extends JpaRepository<PostEntity, Long> {
-    Page<PostEntity> findAllByPostTypeLessThanEqualAndUploadStatusLessThanAndPublishTypeLessThanEqual(Short postType, Short uploadStatus, Short publishType, Pageable pageable);
+    Page<PostEntity> findAllByPostTypeLessThanEqualAndUploadStatusLessThanEqualAndPublishTypeLessThanEqual(Short postType, Short uploadStatus, Short publishType, Pageable pageable);
 }

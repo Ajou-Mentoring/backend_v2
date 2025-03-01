@@ -111,6 +111,19 @@ public class QnaService {
         return qna;
     }
 
+    public QnaDTO.Qna getQnaAndUsersByQnaId(Long id){
+        log.info("Q&A 조회");
+
+        // 요청 검증
+        QnaEntity entity = qnaRepository.findByIdWithUsers(id)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.QNA_NOT_FOUND, String.format("조회할 Q&A를 찾을 수 없습니다. [%d]", id)));
+
+        // 본처리
+        QnaDTO.Qna qna = QnaDTO.Qna.fromEntity(entity);
+
+        return qna;
+    }
+
     // 질문 리스트 조회
     public Paged<QnaDTO.Qna> getQnaPage(int page, int size, boolean notAnsweredOnly) {
 
@@ -146,9 +159,9 @@ public class QnaService {
     public void createAnswer(QnaDTO.Answer dto) {
         log.info("답변 생성");
 
-        // 입력값 검증
         QnaEntity qna = qnaRepository.findById(dto.getId())
-                .orElseThrow(() -> new MainApplicationException(ErrorCode.QNA_NOT_FOUND, "Q&A 게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.QNA_NOT_FOUND,
+                        String.format("조회할 Q&A를 찾을 수 없습니다. [%d]", dto.getId())));
 
         UserEntity answerer = userRepository.findById(dto.getAnswererId())
                 .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "답변자 정보를 찾을 수 없습니다."));

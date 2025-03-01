@@ -91,6 +91,8 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보가 없습니다.")));
     }
 
+
+
     @Override
     public Paged<UserDTO.User> findUsersByName(String name, int page, int size) {
         log.info("유저 페이지 조회 : 이름");
@@ -143,5 +145,11 @@ public class UserServiceImpl implements UserService {
                         .map(UserDTO.User::fromEntity)
                         .toList())
                 .build();
+    }
+
+    @Override
+    public UserEntity findUserInfoById(Long id) {
+        return userRepository.findUserInfoById(id)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보가 없습니다."));
     }
 }
