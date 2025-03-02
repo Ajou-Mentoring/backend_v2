@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class CourseDTO {
+
     @Data
     @Builder
     public static class Course {

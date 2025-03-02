@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import pheonix.classconnect.backend.mentoring.entity.TimeTableEntity;
 import pheonix.classconnect.backend.mentoring.entity.TimeTableId;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TimeTableRepository extends JpaRepository<TimeTableEntity, TimeTableId> {
@@ -17,4 +18,9 @@ public interface TimeTableRepository extends JpaRepository<TimeTableEntity, Time
     Integer findMaxSerNoByUserIdVer(@Param("userId") Long userId, @Param("version") Integer version);
 
     List<TimeTableEntity> findAllById_UserIdAndId_Ver(Long userId, Integer version);
+
+    @Query("SELECT t FROM TimeTable t " +
+            "WHERE t.endDate = :targetDate " +
+            "AND t.endDate = (SELECT MAX(tt.endDate) FROM TimeTable tt WHERE tt.user = t.user)")
+    List<TimeTableEntity> findLatestEndDateUsers(@Param("targetDate") LocalDate targetDate);
 }
