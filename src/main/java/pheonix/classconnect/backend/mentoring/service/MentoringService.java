@@ -98,9 +98,12 @@ public class MentoringService {
         LocalTime from = dto.getStartTime();
         LocalTime to = from.plusMinutes(15);
 
+        boolean endOfDay = false;
         while (to.isBefore(dto.getEndTime()) || to.equals(dto.getEndTime())) {
+
             LocalTime finalFrom = from;
             LocalTime finalTo = to;
+
             if (schedules.stream().noneMatch(schedule -> {
                 boolean inRange = (finalFrom.equals(schedule.getStartTime()) || finalFrom.isAfter(schedule.getStartTime())) &&
                         (finalTo.equals(schedule.getEndTime()) || finalTo.isBefore(schedule.getEndTime()));
@@ -110,8 +113,18 @@ public class MentoringService {
                 throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_ERROR, "해당 시간에 멘토링을 신청할 수 없습니다.");
             }
 
+            if (endOfDay) {
+                break;
+            }
+
             from = from.plusMinutes(15);
             to = to.plusMinutes(15);
+
+            // 예외 처리
+            if (to.equals(LocalTime.of(0, 0))) {
+                to = LocalTime.of(23, 59);
+                endOfDay = true;
+            }
         }
 
         // 겹치는 시간 대에 멘토링이 존재하는지 검증
