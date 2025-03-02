@@ -41,7 +41,7 @@ public class NotificationEntity  {
     @Enumerated(EnumType.ORDINAL)
     private NotificationDomain domain;
 
-    @Column(name = "domain_id", nullable = false)
+    @Column(name = "domain_id", nullable = true)
     private Long domainId;
 
     @Column(name = "created_date", updatable = false)

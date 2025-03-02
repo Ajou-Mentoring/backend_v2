@@ -6,7 +6,8 @@ public enum NotificationDomain {
     MESSAGE(2),
     MENTORING(3),
 
-    COMMENT(4), QNA(5);
+    COMMENT(4), QNA(5),
+    WEEKLY_TIMETABLE(6);
 
     private final int code;
 

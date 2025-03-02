@@ -21,4 +21,5 @@ public interface MentoringRequestRepository extends JpaRepository<MentoringReque
 
     Optional<MentoringRequestEntity> findTopByMentorIdAndRequesterIdOrderByIdDesc(Long mentorId, Long requesterId);
 
+    List<MentoringRequestEntity> findByStatusAndDate(short status, LocalDate date);
 }
