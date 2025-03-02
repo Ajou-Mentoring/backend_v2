@@ -31,7 +31,7 @@ public class NotificationDTO {
 
     public static NotificationDTO fromEntity(NotificationEntity entity){
         return new NotificationDTO(entity.getId(),
-                CourseDTO.Course.fromEntity(entity.getCourse()),
+                entity.getCourse() != null ? CourseDTO.Course.fromEntity(entity.getCourse()): null,
                 entity.getContent(),
                 entity.getIsRead(),
                 entity.getDomain().getCode(),
