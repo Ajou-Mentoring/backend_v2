@@ -18,7 +18,7 @@ import java.time.LocalTime;
 public class NotificationDTO {
 
     private Long id;
-    private CourseDTO.Course course;
+    private Long courseId;
     private String content;
     private Boolean isRead;
     private Integer domain;
@@ -31,7 +31,7 @@ public class NotificationDTO {
 
     public static NotificationDTO fromEntity(NotificationEntity entity){
         return new NotificationDTO(entity.getId(),
-                entity.getCourse() != null ? CourseDTO.Course.fromEntity(entity.getCourse()): null,
+                entity.getCourse() != null ? entity.getCourse().getId(): null,
                 entity.getContent(),
                 entity.getIsRead(),
                 entity.getDomain().getCode(),
