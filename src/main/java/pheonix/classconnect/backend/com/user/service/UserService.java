@@ -15,4 +15,5 @@ public interface UserService {
     Paged<UserDTO.User> findUsers(int page, int size);
 
     UserEntity findUserInfoById(Long id);
+    void updateUserInfo(Long userId, UserDTO.Update userDto);
 }

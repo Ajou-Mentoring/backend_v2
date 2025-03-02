@@ -16,6 +16,7 @@ import pheonix.classconnect.backend.notification.entity.NotificationEntity;
 import pheonix.classconnect.backend.notification.model.NotificationDTO;
 import pheonix.classconnect.backend.notification.repository.NotificationRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,9 +55,9 @@ public class NotificationService {
         Integer pageSize = dto.getSize();
         Long cursorId = dto.getCursorId();
 
-        Pageable pageable = PageRequest.of(dto.getPage(), pageSize + 1, Sort.by(Sort.Direction.DESC, "id"));
+        Pageable pageable = PageRequest.of(0, pageSize + 1, Sort.by(Sort.Direction.DESC, "id"));
 
-        List<NotificationEntity> notificationEntities = cursorId == null ?
+        List<NotificationEntity> notificationEntities = cursorId.equals(0L) ?
                 notificationRepository.findByUserIdOrderByIdDesc(userId, pageable) :
                 notificationRepository.findByUserIdAndIdLessThanEqualOrderByIdDesc(userId, cursorId, pageable);
 
@@ -67,19 +68,16 @@ public class NotificationService {
         PageResponse<NotificationDTO> response = new PageResponse<>();
         boolean hasNext = notifications.size() > pageSize;
 
+        if (hasNext) {
+            response.setNextCursorId(notifications.get(notifications.size() - 1).getId());
+            notifications.remove(notifications.size() - 1);
+        }
 
         response.setItems(notifications);
         response.setHasNext(hasNext);
 
-        // 다음 아이템이 없다면 -> 마지막 페이지라면
         if (!hasNext) {
             response.setNextCursorId(null);
-        }
-
-        // 다음 아이템들이 있다면 -> 마지막 페이지가 아니라면
-        else{
-            response.setNextCursorId(notifications.get(notifications.size() - 1).getId());
-            notifications.remove(notifications.size() - 1);
         }
 
         return response;

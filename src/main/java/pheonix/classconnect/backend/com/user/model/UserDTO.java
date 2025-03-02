@@ -58,6 +58,13 @@ public class UserDTO {
 
     @Data
     @Builder
+    public static class Update {
+        private String name;
+        private Long image;
+    }
+
+    @Data
+    @Builder
     public static class Response00 {
         private Long id;
         private String name;
@@ -89,6 +96,13 @@ public class UserDTO {
         private String department;
         private FileResponse.Info profile;
         private Short auth;
+    }
+
+    @Data
+    @Builder
+    public static class Request03 {
+        private String name;
+        private Long image;
     }
 
     @Data
