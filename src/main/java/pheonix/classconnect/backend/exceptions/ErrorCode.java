@@ -19,7 +19,7 @@ public enum ErrorCode {
     USER_CREATE_FAILED(              HttpStatus.INTERNAL_SERVER_ERROR,      "USER002" , "유저 생성에 실패했습니다."),
     USER_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "USER003",      "유저를 찾을 수 없습니다."),
     USER_BAD_REQUEST(HttpStatus.BAD_REQUEST,                   "USER004",      "잘못된 요청입니다."),
-
+    USER_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "USER005", "잘못된 파라미터 값입니다."),
 
     AUTH_NOT_FOUND(                 HttpStatus.NOT_FOUND,                   "AUTH001",   "권한을 찾을 수 없습니다."),
 

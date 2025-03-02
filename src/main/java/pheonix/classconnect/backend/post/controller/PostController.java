@@ -143,7 +143,7 @@ public class PostController {
         Short allowedStatus;
         Short allowedPublishType;
 
-        if (principalDetailsService.isAdmin(user)) {
+        if (user != null && principalDetailsService.isAdmin(user)) {
             allowedStatus = PostUploadStatus.삭제;
             allowedPublishType = PostPublishType.관리자;
         } else {

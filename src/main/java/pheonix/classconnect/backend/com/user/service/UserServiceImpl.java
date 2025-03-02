@@ -7,6 +7,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import pheonix.classconnect.backend.com.attachment.constants.AttachmentDomainType;
+import pheonix.classconnect.backend.com.attachment.model.File;
 import pheonix.classconnect.backend.com.attachment.service.FileStorage;
 import pheonix.classconnect.backend.com.auth.constant.AuthorityCode;
 import pheonix.classconnect.backend.com.auth.entity.AuthorityEntity;
@@ -151,5 +154,24 @@ public class UserServiceImpl implements UserService {
     public UserEntity findUserInfoById(Long id) {
         return userRepository.findUserInfoById(id)
                 .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보가 없습니다."));
+    }
+
+    @Override
+    @Transactional
+    public void updateUserInfo(Long userId, UserDTO.Update userDto) {
+        log.info("사용자 정보 수정");
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new MainApplicationException(ErrorCode.USER_NOT_FOUND, "유저 정보가 없습니다."));
+
+        user.updateInfo(userDto.getName());
+        // 이전 프로필 이미지 삭제
+        fileStorage.deleteAllFilesIn(AttachmentDomainType.PROFILE, user.getId());
+
+        // image가 null이 아니면 교체
+        if (userDto.getImage() != null) {
+            File file = fileStorage.getFileById(userDto.getImage());
+            fileStorage.mapFileToDomain(file.getId(), AttachmentDomainType.PROFILE, user.getId());
+        }
     }
 }
