@@ -22,7 +22,7 @@ public class GlobalControllerAdvice {
     public Response<String> methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
         log.error(e.getMessage());
 
-        return Response.error(ErrorCode.BACK_INVALID_PARAMETER, "API 파라미터 에러입니다.");
+        return Response.error(ErrorCode.BACK_INVALID_PARAMETER, "API 파라미터 에러입니다." + e.getMessage());
     }
 
 
