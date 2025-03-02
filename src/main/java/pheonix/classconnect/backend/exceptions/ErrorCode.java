@@ -10,6 +10,7 @@ public enum ErrorCode {
     BAK_LOGIC_ERROR(                HttpStatus.FORBIDDEN,                   "BACK001",    "백엔드 로직 오류입니다."),
     BACK_INVALID_PERMISSION(         HttpStatus.UNAUTHORIZED,                   "BACK002",   "요청 권한이 없습니다."),
     BACK_NONNULL_PARAMETER(         HttpStatus.BAD_REQUEST,                 "BACK003",      "파라미터가 Null입니다."),
+    BACK_INVALID_PARAMETER(         HttpStatus.BAD_REQUEST,                 "BACK004",      "파라미터 검증 에러입니다. 요청 파라미터 값이 유효한지 확인하세요."),
 
     SYS_INTERNAL_SERVER_ERROR(      HttpStatus.INTERNAL_SERVER_ERROR,       "SYS500",   "서버 오류입니다."),
     SYS_UNCAUGHT_ERROR(             HttpStatus.INTERNAL_SERVER_ERROR,       "SYS999",   "핸들링 되지 않은 오류입니다."),
