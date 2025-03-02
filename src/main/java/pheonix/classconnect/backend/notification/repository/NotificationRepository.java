@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import pheonix.classconnect.backend.notification.entity.NotificationEntity;
 
@@ -13,6 +14,8 @@ import java.util.List;
 public interface NotificationRepository extends JpaRepository<NotificationEntity, Long> {
     List<NotificationEntity> findByUserIdAndIdLessThanEqualOrderByIdDesc(Long userId, Long cursorId, Pageable pageable);
     List<NotificationEntity> findByUserIdOrderByIdDesc(Long userId, Pageable pageable);
+
+
 
     Integer countByUserIdAndIsReadFalse(Long userId);
 
