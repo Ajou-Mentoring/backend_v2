@@ -16,10 +16,15 @@ spring:
       landing-page-url: ${TEST_LANDING_PAGE_URL}
       sign-up-page-url: ${TEST_SIGNUP_PAGE_URL}
 
-#server:
-#  domain: ${BACK_DOMAIN}
-#  port: ${DEV_SERVER_PORT:8443}
+server:
+  domain: ${BACK_DOMAIN}
+  port: 8080
+  port-export: ${DEV_SERVER_PORT:8443}
 #  ssl:
 #    key-store: ${SSL_KEY_STORE}
 #    key-store-type: ${SSL_KEY_TYPE}
 #    key-store-password: ${SSL_KEY_PASSWORD}
+
+logging:
+  level:
+    root: DEBUG

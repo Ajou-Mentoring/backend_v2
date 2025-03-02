@@ -16,9 +16,10 @@ spring:
       landing-page-url: ${LANDING_PAGE_URL}
       sign-up-page-url: ${SIGNUP_PAGE_URL}
 
-#server:
-#  domain: ${BACK_DOMAIN}
-#  port: ${DEPLOY_SERVER_PORT:443}
+server:
+  domain: ${BACK_DOMAIN}
+  port: 8080
+  port-export: ${DEPLOY_SERVER_PORT:443}
 #  ssl:
 #    key-store: ${SSL_KEY_STORE}
 #    key-store-type: ${SSL_KEY_TYPE}
