@@ -68,6 +68,43 @@ public class UserController {
         return Response.ok(HttpStatus.OK, "프로필을 조회했습니다.", res);
     }
 
+    @PutMapping("/users/me/profile")
+    public Response updateUserProfile(@RequestBody UserDTO.Request03 req,
+                                      @AuthenticationPrincipal User user) {
+        log.info("UserController.updateUserProfile()");
+
+        // 요청 검증
+        if (user == null) {
+            throw new MainApplicationException(ErrorCode.BACK_INVALID_PERMISSION, "사용자 권한 정보가 없습니다.");
+        }
+        if (req.getName() == null || req.getName().isBlank()) {
+            throw new MainApplicationException(ErrorCode.USER_INVALID_PARAMETER, "이름이 NULL 또는 빈칸입니다.");
+        }
+
+        UserDTO.User usr = userService.findUserById(Long.parseLong(user.getUsername()));
+
+        // 프로필 세팅
+        List<File> files = fileStorage.getAttachmentList(AttachmentDomainType.PROFILE, usr.getId());
+        FileResponse.Info profileImg = files.isEmpty() ? new FileResponse.Info() : FileResponse.Info.fromFile(files.getFirst());
+
+        // 응답 SET
+        UserDTO.Response00 res = UserDTO.Response00.builder()
+                .id(usr.getId())
+                .name(usr.getName())
+                .email(usr.getEmail())
+                .studentNo(usr.getStudentNo())
+                .department(usr.getDepartment().getName())
+                .auth(usr.getAuthorities().stream()
+                        .map(AuthorityDTO.AuthorityInfo::getCode)
+                        .max(Short::compare)
+                        .orElse((short) 0))
+                .build();
+
+        res.setProfile(profileImg);
+
+        return Response.ok(HttpStatus.OK, "프로필을 조회했습니다.", res);
+    }
+
 
     /**
      * 현재 로그인한 사용자의 알림 목록을 조회하는 API

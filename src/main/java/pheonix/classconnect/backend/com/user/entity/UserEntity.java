@@ -75,4 +75,9 @@ public class UserEntity extends BaseTimeEntity {
         }
         else this.authorities.add(auth);
     }
+
+    public void updateInfo(String name) {
+        this.name = name;
+    }
+
 }
