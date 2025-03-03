@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pheonix.classconnect.backend.com.common.model.PageResponse;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
+import pheonix.classconnect.backend.course.entity.CourseMemberEntity;
+import pheonix.classconnect.backend.course.model.CourseDTO;
+import pheonix.classconnect.backend.course.repository.CourseMemberEntityRepository;
 import pheonix.classconnect.backend.exceptions.ErrorCode;
 import pheonix.classconnect.backend.exceptions.MainApplicationException;
 import pheonix.classconnect.backend.mentoring.contants.MentoringStatus;
@@ -36,6 +39,9 @@ public class NotificationService {
     private MentoringRequestRepository mentoringRequestRepository;
 
     @Autowired
+    private CourseMemberEntityRepository courseMemberEntityRepository;
+
+    @Autowired
     private TimeTableRepository  timeTableRepository;
 
 
@@ -56,7 +62,7 @@ public class NotificationService {
 //                .build();
 //    }
 
-    public PageResponse<NotificationDTO> getMyNotifications(Long userId, pheonix.classconnect.backend.com.common.model.PageRequest dto) {
+    public PageResponse<NotificationDTO.NotificationWithRole> getMyNotifications(Long userId, pheonix.classconnect.backend.com.common.model.PageRequest dto) {
         Integer pageSize = dto.getSize();
         Long cursorId = dto.getCursorId();
 
@@ -66,11 +72,30 @@ public class NotificationService {
                 notificationRepository.findByUserIdOrderByIdDesc(userId, pageable) :
                 notificationRepository.findByUserIdAndIdLessThanEqualOrderByIdDesc(userId, cursorId, pageable);
 
-        List<NotificationDTO> notifications = notificationEntities.stream()
-                .map(NotificationDTO::fromEntity)
-                .collect(Collectors.toList());
+        List<NotificationDTO.NotificationWithRole> notifications = new ArrayList<>();
 
-        PageResponse<NotificationDTO> response = new PageResponse<>();
+        for (NotificationEntity entity : notificationEntities) {
+            Long courseId = (entity.getCourse() != null) ? entity.getCourse().getId() : null;
+
+            CourseDTO.Member member = (courseId != null)
+                    ? CourseDTO.Member.fromEntity(courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId).orElse(null))
+                    : null;
+
+            notifications.add(NotificationDTO.NotificationWithRole.builder()
+                    .id(entity.getId())
+                    .domain(entity.getDomain().getCode())
+                    .domainId(entity.getDomainId())
+                    .isRead(entity.getIsRead())
+                    .createdDate(entity.getCreatedDate())
+                    .createdTime(entity.getCreatedTime())
+                    .content(entity.getContent())
+                    .course(member)
+                    .build());
+        }
+
+
+
+        PageResponse<NotificationDTO.NotificationWithRole> response = new PageResponse<>();
         boolean hasNext = notifications.size() > pageSize;
 
         if (hasNext) {
