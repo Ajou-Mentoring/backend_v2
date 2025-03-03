@@ -20,6 +20,11 @@ server:
   domain: ${BACK_DOMAIN}
   port: 8080
   port-export: ${DEPLOY_SERVER_PORT:443}
+  tomcat:
+    threads:
+      max: 100
+      min-spare: 5
+    accept-count: 50
 #  ssl:
 #    key-store: ${SSL_KEY_STORE}
 #    key-store-type: ${SSL_KEY_TYPE}
