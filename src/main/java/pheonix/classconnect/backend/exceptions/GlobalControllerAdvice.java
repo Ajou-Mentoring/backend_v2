@@ -14,7 +14,7 @@ public class GlobalControllerAdvice {
 
     @ExceptionHandler(MainApplicationException.class)
     public Response<String> applicationHandler(MainApplicationException e){
-
+        log.error("[{}]{}",e.getErrorCode().getCode(), e.getMessage());
         return Response.error(e.getErrorCode(), e.getMessage());
     }
 
