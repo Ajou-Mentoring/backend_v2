@@ -28,19 +28,19 @@ public class NotificationDTO {
 
     @Builder
     @Data
-    public static class NotificationWithRole{
+    public static class SimplifiedNotification {
         private Long id;
-        private CourseDTO.Member course;
+        private Long courseId;
+        private String courseName;
+        private Short courseRole;
         private String content;
         private Boolean isRead;
         private Integer domain;
         private Long domainId;
-
         private LocalDate createdDate;
-
         private LocalTime createdTime;
-
     }
+
     public static NotificationDTO fromEntity(NotificationEntity entity){
         return new NotificationDTO(entity.getId(),
                 entity.getCourse() != null ? entity.getCourse().getId():null,
