@@ -127,11 +127,8 @@ public class AuthController {
                 .authorities(Set.of(AuthorityCode.STUDENT))
                 .activeStatus(UserActiveStatus.ACTIVE)
                 .build();
-        try {
-            userService.createUser(newUser);
-        } catch (Exception e) {
-            throw new MainApplicationException(ErrorCode.USER_CREATE_FAILED, "유저 생성에 실패했습니다.");
-        }
+
+        userService.createUser(newUser);
 
         // 토큰 발급 페이지로 포워딩
         model.addAttribute("message", "회원가입 성공!");

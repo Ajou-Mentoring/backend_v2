@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface DepartmentRepository extends JpaRepository<DepartmentEntity, Integer> {
     Optional<DepartmentEntity> findByName(String name);
-    Optional<Integer> findTopByOrderByIdDesc();
+    Optional<DepartmentEntity> findTopByOrderByIdDesc();
 }
