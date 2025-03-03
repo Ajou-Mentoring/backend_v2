@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
         DepartmentEntity dep = departmentRepository.findByName(createDto.getDepartmentName()).orElse(null);
         // 임시 로직 : 없다면 DB에 새로운 학과 저장 (삭제 예정)
         if (dep == null) {
-            Integer maxDepId = departmentRepository.findTopByOrderByIdDesc().orElse(0);
+            Integer maxDepId = departmentRepository.findTopByOrderByIdDesc().map(DepartmentEntity::getId).orElse(0);
             dep = departmentRepository.save(new DepartmentEntity(maxDepId+1, createDto.getDepartmentName()));
         }
         newUser.updateDepartment(dep);
