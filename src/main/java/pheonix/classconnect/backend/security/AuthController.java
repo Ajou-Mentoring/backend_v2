@@ -130,6 +130,7 @@ public class AuthController {
         try {
             userService.createUser(newUser);
         } catch (Exception e) {
+            log.error(e.getMessage());
             throw new MainApplicationException(ErrorCode.USER_CREATE_FAILED, "유저 생성에 실패했습니다.");
         }
 
