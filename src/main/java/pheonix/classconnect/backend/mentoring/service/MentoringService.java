@@ -58,6 +58,7 @@ public class MentoringService {
     private static final int 멘티ID기준전체조회 = 4;
 
     @Transactional
+
     public void createRequest(MentoringRequestDTO.Create dto) {
         log.info("멘토링 요청 생성");
 
