@@ -62,7 +62,7 @@ public class NotificationService {
 //                .build();
 //    }
 
-    public PageResponse<NotificationDTO.NotificationWithRole> getMyNotifications(Long userId, pheonix.classconnect.backend.com.common.model.PageRequest dto) {
+    public PageResponse<NotificationDTO.SimplifiedNotification> getMyNotifications(Long userId, pheonix.classconnect.backend.com.common.model.PageRequest dto) {
         Integer pageSize = dto.getSize();
         Long cursorId = dto.getCursorId();
 
@@ -72,30 +72,37 @@ public class NotificationService {
                 notificationRepository.findByUserIdOrderByIdDesc(userId, pageable) :
                 notificationRepository.findByUserIdAndIdLessThanEqualOrderByIdDesc(userId, cursorId, pageable);
 
-        List<NotificationDTO.NotificationWithRole> notifications = new ArrayList<>();
+        List<NotificationDTO.SimplifiedNotification> notifications = new ArrayList<>();
 
         for (NotificationEntity entity : notificationEntities) {
             Long courseId = (entity.getCourse() != null) ? entity.getCourse().getId() : null;
+            String courseName = (entity.getCourse() != null) ? entity.getCourse().getName() : null;
 
-            CourseDTO.Member member = (courseId != null)
-                    ? CourseDTO.Member.fromEntity(courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId).orElse(null))
+            Short courseRole = (courseId != null)
+                    ? courseMemberEntityRepository.findByUserIdAndCourseId(userId, courseId)
+                    .map(CourseMemberEntity::getRole)
+                    .orElse(null)
                     : null;
 
-            notifications.add(NotificationDTO.NotificationWithRole.builder()
+
+            notifications.add(NotificationDTO.SimplifiedNotification.builder()
                     .id(entity.getId())
+                    .courseId(courseId)
+                    .courseName(courseName)
+                    .courseRole(courseRole)
+                    .content(entity.getContent())
+                    .isRead(entity.getIsRead())
                     .domain(entity.getDomain().getCode())
                     .domainId(entity.getDomainId())
-                    .isRead(entity.getIsRead())
                     .createdDate(entity.getCreatedDate())
                     .createdTime(entity.getCreatedTime())
-                    .content(entity.getContent())
-                    .course(member)
                     .build());
         }
 
 
 
-        PageResponse<NotificationDTO.NotificationWithRole> response = new PageResponse<>();
+
+        PageResponse<NotificationDTO.SimplifiedNotification> response = new PageResponse<>();
         boolean hasNext = notifications.size() > pageSize;
 
         if (hasNext) {
