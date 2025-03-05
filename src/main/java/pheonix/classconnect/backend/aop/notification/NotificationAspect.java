@@ -29,7 +29,6 @@ import pheonix.classconnect.backend.qna.service.QnaService;
 
 @Aspect
 @Component
-@Async
 @Transactional
 public class NotificationAspect {
 
@@ -73,6 +72,7 @@ public class NotificationAspect {
      * Description: 멘토에게 멘토링 신청이 왔다는 알림과 메일을 보내는 메서드
      */
     @AfterReturning(value = "afterMentoringRequest(dto)")
+    @Async("customThreadPool")
     public void afterMentoringCreate(MentoringRequestDTO.Create dto) {
 
 
@@ -120,26 +120,31 @@ public class NotificationAspect {
 
 
     @AfterReturning(value = "acceptMentoringRequest(requestId, comment)")
+    @Async("customThreadPool")
     public void afterAcceptMentoring(Long requestId, String comment) {
         sendMentoringStatusNotification(requestId, "승인", comment);
     }
 
     @AfterReturning(value = "rejectMentoringRequest(requestId, comment)")
+    @Async("customThreadPool")
     public void afterRejectMentoring(Long requestId, String comment) {
         sendMentoringStatusNotification(requestId, "반려", comment);
     }
 
      @AfterReturning(value = "cancelMentoringRequest(requestId,courseId,comment, userId)")
+     @Async("customThreadPool")
      public void afterCancelMentoring(Long requestId, Long courseId, String comment, Long userId) {
          sendMentoringStatusNotification(requestId, "취소", comment);
      }
 
     @AfterReturning(value = "courseRoleChanged(courseId, userId, role)")
+    @Async("customThreadPool")
     public void afterCourseRoleChanged(Long courseId, Long userId, Short role) {
         sendNotificationAfterCourseRoleChanged(courseId, userId, role);
     }
 
     @Transactional(readOnly = true)
+    @Async("customThreadPool")
     @AfterReturning(value = "qnaAnswerCreated(dto)")
     public void afterQnaAnswerCreated(QnaDTO.Answer dto){
         QnaDTO.Qna qna = qnaService.getQnaAndUsersByQnaId(dto.getId());
