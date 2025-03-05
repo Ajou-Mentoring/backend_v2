@@ -37,7 +37,7 @@ public class ScheduleService {
         List<ScheduleEntity> savedSchedules = scheduleRepository.findAllById_UserIdAndId_DateBetweenOrderById_DateAscStartTimeAsc(timeTable.getUserId(), timeTable.getStartDate(), timeTable.getEndDate());
 
         // 등록된 스케줄이 없거나 등록할 스케줄이 없는 경우 빈 객체 배열 리턴
-        if (savedSchedules.isEmpty() || timeTable.getSchedules().isEmpty()) {
+        if (savedSchedules.isEmpty()) {
             return duplicated;
         }
 
