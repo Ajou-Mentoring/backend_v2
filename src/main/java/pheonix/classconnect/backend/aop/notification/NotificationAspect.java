@@ -184,25 +184,31 @@ public class NotificationAspect {
         UserEntity mentee = mentoringRequestEntity.getRequester();
         String content = "";
 
+        UserEntity target = null;
+
         if(mentoringRequestEntity.getStatus() == MentoringStatus.멘티취소){
-            content =  String.format("%s 수업의 %s 멘티가 멘토링 요청을 취소했습니다. 사유: %s", course.getName(), mentee.getName(), comment);
+            target = mentor;
+            content =  String.format("%s 수업의 %s 멘티가 멘토링을 %s했습니다. 멘티의 메세지: %s", course.getName(), mentee.getName(), status, comment);
         }
         else {
-            content = String.format("%s 수업의 %s 멘토가 멘토링 요청을 %s했습니다. 사유: %s",
+            target = mentee;
+            content = String.format("%s 수업의 %s 멘토가 멘토링을  %s했습니다. 멘토의 메세지: %s",
                     course.getName(), mentor.getName(), status, comment);
         }
 
+        if(target != null) {
 
-        NotificationEntity notificationEntity = NotificationEntity.builder()
-                .user(mentee)
-                .course(course)
-                .content(content)
-                .domain(NotificationDomain.MENTORING)
-                .domainId(mentoringRequestEntity.getId())
-                .isRead(false)
-                .build();
+            NotificationEntity notificationEntity = NotificationEntity.builder()
+                    .user(target)
+                    .course(course)
+                    .content(content)
+                    .domain(NotificationDomain.MENTORING)
+                    .domainId(mentoringRequestEntity.getId())
+                    .isRead(false)
+                    .build();
 
-        notificationService.createNotification(notificationEntity);
+            notificationService.createNotification(notificationEntity);
+        }
     }
 
     private void sendNotificationAfterCourseRoleChanged(Long courseId, Long userId, Short role) {
