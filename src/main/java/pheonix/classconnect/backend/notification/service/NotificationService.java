@@ -159,8 +159,10 @@ public class NotificationService {
         List<NotificationEntity> notifications = new ArrayList<>();
 
         for (MentoringRequestEntity request : requests) {
-            String content = "멘토링이 예정되어 있습니다. 시간: "
-                    + request.getStartTime() + " - " + request.getEndTime();
+            String content = "멘토링이 예정되어 있습니다. ["
+                    + request.getDate() + " "
+                    + request.getStartTime() + " - " + request.getEndTime()
+                    + "]";
 
 
             if (request.getMentor() != null && request.getRequester() != null) {
