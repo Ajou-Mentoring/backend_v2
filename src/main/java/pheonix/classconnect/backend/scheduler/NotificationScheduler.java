@@ -11,12 +11,12 @@ public class NotificationScheduler {
 
     private final NotificationService notificationService;
 
-    @Scheduled(cron = "0 0 15 * * ?", zone = "Asia/Seoul") // 한국시간(KST) 자정
+    @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul") // 한국시간(KST) 자정
     public void scheduleMentoringNotifications() {
         notificationService.createMentoringNotifications();
     }
 
-    @Scheduled(cron = "0 0 15 * * ?", zone = "Asia/Seoul") // 한국시간(KST) 자정
+    @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Seoul") // 한국시간(KST) 자정
     public void scheduleTimeTableNotifications() {
 
         notificationService.createTimeTableNotifications();

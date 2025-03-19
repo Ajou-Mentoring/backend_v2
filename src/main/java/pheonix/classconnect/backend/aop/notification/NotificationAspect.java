@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import pheonix.classconnect.backend.aop.mail.MailService;
 import pheonix.classconnect.backend.com.auth.model.AuthorityDTO;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
 import pheonix.classconnect.backend.com.user.service.UserService;
@@ -48,6 +49,9 @@ public class NotificationAspect {
 
     @Autowired
     private QnaService qnaService;
+
+    @Autowired
+    private MailService mailService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -97,7 +101,7 @@ public class NotificationAspect {
         notificationService.createNotification(notificationEntity);
 
         //TODO: 메일 개발이후 해당 로직 구현
-//    mailService.sendMentoringMail(dto);
+         mailService.sendMentoringMail(mentoringRequest);
     }
 
 
@@ -184,25 +188,32 @@ public class NotificationAspect {
         UserEntity mentee = mentoringRequestEntity.getRequester();
         String content = "";
 
+        UserEntity target = null;
+
         if(mentoringRequestEntity.getStatus() == MentoringStatus.멘티취소){
-            content =  String.format("%s 수업의 %s 멘티가 멘토링 요청을 취소했습니다. 사유: %s", course.getName(), mentee.getName(), comment);
+            target = mentor;
+            content =  String.format("%s 수업의 %s 멘티가 멘토링을 %s했습니다. 멘티의 메세지: %s", course.getName(), mentee.getName(), status, comment);
         }
         else {
-            content = String.format("%s 수업의 %s 멘토가 멘토링 요청을 %s했습니다. 사유: %s",
+            target = mentee;
+            content = String.format("%s 수업의 %s 멘토가 멘토링을  %s했습니다. 멘토의 메세지: %s",
                     course.getName(), mentor.getName(), status, comment);
         }
 
+        if(target != null) {
 
-        NotificationEntity notificationEntity = NotificationEntity.builder()
-                .user(mentee)
-                .course(course)
-                .content(content)
-                .domain(NotificationDomain.MENTORING)
-                .domainId(mentoringRequestEntity.getId())
-                .isRead(false)
-                .build();
+            NotificationEntity notificationEntity = NotificationEntity.builder()
+                    .user(target)
+                    .course(course)
+                    .content(content)
+                    .domain(NotificationDomain.MENTORING)
+                    .domainId(mentoringRequestEntity.getId())
+                    .isRead(false)
+                    .build();
 
-        notificationService.createNotification(notificationEntity);
+            notificationService.createNotification(notificationEntity);
+            mailService.sendMentoringMail(mentoringRequestEntity);
+        }
     }
 
     private void sendNotificationAfterCourseRoleChanged(Long courseId, Long userId, Short role) {
