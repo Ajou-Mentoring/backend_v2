@@ -16,6 +16,20 @@ spring:
       landing-page-url: ${LANDING_PAGE_URL}
       sign-up-page-url: ${SIGNUP_PAGE_URL}
 
+  mail:
+      host: ${GMAIL_HOST}
+      port: ${GMAIL_PORT}
+      username: ${GMAIL_USER}
+      password: ${GMAIL_PASSWORD}
+      properties:
+        mail:
+          smtp:
+            auth: true
+            timeout: 5000
+            starttls:
+              enable: true
+            ssl:
+              true: smtp-relay.gmail.com
 server:
   domain: https://localhost
   port: 8080

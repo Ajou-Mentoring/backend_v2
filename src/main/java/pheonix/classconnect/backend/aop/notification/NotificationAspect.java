@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import pheonix.classconnect.backend.aop.mail.MailService;
 import pheonix.classconnect.backend.com.auth.model.AuthorityDTO;
 import pheonix.classconnect.backend.com.user.entity.UserEntity;
 import pheonix.classconnect.backend.com.user.service.UserService;
@@ -48,6 +49,9 @@ public class NotificationAspect {
 
     @Autowired
     private QnaService qnaService;
+
+    @Autowired
+    private MailService mailService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -97,7 +101,7 @@ public class NotificationAspect {
         notificationService.createNotification(notificationEntity);
 
         //TODO: 메일 개발이후 해당 로직 구현
-//    mailService.sendMentoringMail(dto);
+         mailService.sendMentoringMail(mentoringRequest);
     }
 
 
@@ -208,6 +212,7 @@ public class NotificationAspect {
                     .build();
 
             notificationService.createNotification(notificationEntity);
+            mailService.sendMentoringMail(mentoringRequestEntity);
         }
     }
 
