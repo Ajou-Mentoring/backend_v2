@@ -737,8 +737,8 @@ public class MentoringService {
                 MentoringResultEntity result = mentoringResultRepository.findById(resultDTO.getId())
                         .orElseThrow(() -> new MainApplicationException(ErrorCode.MENTORING_RESULT_NOT_FOUND, "증빙자료를 찾을 수 없습니다."));
 
-
-                MentoringRequestEntity request = this.getMentoringRequestEntityById(result.getRequest().getId());
+                // request가 등록되어있다면 해당 request의 registered를 false로 변경
+                MentoringRequestEntity request = result.getRequest();
                 if (result.getRequest() != null) {
                
                     request.setRegistered(false);
