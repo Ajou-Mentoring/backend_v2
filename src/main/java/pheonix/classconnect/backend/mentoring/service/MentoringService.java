@@ -63,6 +63,7 @@ public class MentoringService {
         log.info("멘토링 요청 생성");
 
 
+
         // 요청 검증
         if (dto.getSite() != MentoringSite.ONLINE && dto.getSite() != MentoringSite.OFFLINE) {
             throw new MainApplicationException(ErrorCode.MENTORING_REQUEST_INVALID_PARAMETER, String.format("지원하지 않는 멘토링 방식 구분입니다. [%d]", dto.getSite()));
@@ -206,7 +207,7 @@ public class MentoringService {
 
         request.accept(comment);
 
-        mentoringRequestRepository.save(request);
+        mentoringRequestRepository.saveAndFlush(request);
     }
 
     // 멘토링 반려
@@ -229,7 +230,7 @@ public class MentoringService {
 
         request.reject(comment);
 
-        mentoringRequestRepository.save(request);
+        mentoringRequestRepository.saveAndFlush(request);
     }
 
 
